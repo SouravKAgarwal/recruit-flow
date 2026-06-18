@@ -1,38 +1,60 @@
 import { getTemplates } from "@/app/actions/templates";
-import { TemplateEditor } from "@/components/templates/TemplateEditor";
-import { TemplateList } from "@/components/templates/TemplateList";
-import { redirect } from "next/navigation";
+import { TemplatesTable } from "@/components/templates/TemplatesTable";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Metadata } from "next";
 
-export const metadata = { title: "Templates" };
+export const metadata: Metadata = { title: "Templates" };
 
 export default async function TemplatesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string }>;
 }) {
-  const { id } = await searchParams;
-  const templates = await getTemplates();
+  const { q, sort } = await searchParams;
+  let templates = await getTemplates();
 
-  // Redirect to the first template if none selected and templates exist
-  if (!id && templates.length > 0) {
-    redirect(`/templates?id=${templates[0].id}`);
+  // Apply search filtering
+  if (q) {
+    const query = q.toLowerCase();
+    templates = templates.filter(
+      (t) =>
+        t.name?.toLowerCase().includes(query) ||
+        t.subject?.toLowerCase().includes(query),
+    );
   }
 
-  const activeTemplate = templates.find((t) => t.id === id) || null;
+  // Apply sorting
+  if (sort) {
+    const [key, direction] = sort.split(":");
+    templates.sort((a: any, b: any) => {
+      const valA = a[key] ?? "";
+      const valB = b[key] ?? "";
+      if (valA < valB) return direction === "asc" ? -1 : 1;
+      if (valA > valB) return direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
 
   return (
-    <div className="flex flex-col gap-6 h-[calc(100vh-8rem)]">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <h1 className="text-2xl font-extrabold tracking-tight">Templates</h1>
-          {templates.length > 0 && (
-            <div className="hidden sm:block w-px h-6 bg-border mx-2" />
-          )}
-          <TemplateList templates={templates} activeId={id || null} />
+    <div>
+      <div className="flex items-center justify-between gap-4 mb-5">
+        <div className="flex-1">
+          <SearchInput placeholder="Search templates…" />
+        </div>
+        <div className="flex sm:w-auto gap-2">
+          <Link href="/templates/new">
+            <Button className="shadow-sm">
+              <Plus size={16} className="mr-2" />
+              Create New
+            </Button>
+          </Link>
         </div>
       </div>
 
-      <TemplateEditor initialTemplate={activeTemplate} />
+      <TemplatesTable templates={templates} />
     </div>
   );
 }

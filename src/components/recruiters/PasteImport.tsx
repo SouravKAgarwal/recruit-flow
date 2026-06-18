@@ -9,8 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Wand2 } from "lucide-react";
 
 interface ParsedRow {
-  name?: string; company?: string; role?: string;
-  email?: string; linkedin?: string; location?: string;
+  name?: string;
+  company?: string;
+  role?: string;
+  email?: string;
+  linkedin?: string;
+  location?: string;
 }
 
 function detectAndParse(raw: string): ParsedRow[] {
@@ -23,7 +27,10 @@ function detectAndParse(raw: string): ParsedRow[] {
     let current: ParsedRow = {};
     for (const line of lines) {
       if (line.trim() === "" || line.startsWith("#")) {
-        if (Object.keys(current).length > 0) { rows.push(current); current = {}; }
+        if (Object.keys(current).length > 0) {
+          rows.push(current);
+          current = {};
+        }
         continue;
       }
       const [k, ...rest] = line.split("=");
@@ -45,26 +52,40 @@ function detectAndParse(raw: string): ParsedRow[] {
   const headerLine = lines[0].toLowerCase().replace(/"/g, "");
   const headerCols = headerLine.split(sep).map((h) => h.trim());
 
-  const knownHeaders = ["name", "company", "role", "email", "linkedin", "location"];
+  const knownHeaders = [
+    "name",
+    "company",
+    "role",
+    "email",
+    "linkedin",
+    "location",
+  ];
   const hasHeader = knownHeaders.some((h) => headerCols.includes(h));
 
   const dataLines = hasHeader ? lines.slice(1) : lines;
   const headers = hasHeader ? headerCols : guessHeaders(headerCols.length);
 
-  return dataLines.map((line) => {
-    const cells = line.split(sep).map((c) => c.replace(/^"|"$/g, "").trim());
-    const row: ParsedRow = {};
-    headers.forEach((h, i) => {
-      const v = cells[i] ?? "";
-      if (h.includes("name")) row.name = v;
-      else if (h.includes("company")) row.company = v;
-      else if (h.includes("role") || h.includes("title") || h.includes("position")) row.role = v;
-      else if (h.includes("email") || h.includes("mail")) row.email = v;
-      else if (h.includes("linkedin") || h.includes("link")) row.linkedin = v;
-      else if (h.includes("location") || h.includes("city")) row.location = v;
-    });
-    return row;
-  }).filter((r) => r.email || r.name);
+  return dataLines
+    .map((line) => {
+      const cells = line.split(sep).map((c) => c.replace(/^"|"$/g, "").trim());
+      const row: ParsedRow = {};
+      headers.forEach((h, i) => {
+        const v = cells[i] ?? "";
+        if (h.includes("name")) row.name = v;
+        else if (h.includes("company")) row.company = v;
+        else if (
+          h.includes("role") ||
+          h.includes("title") ||
+          h.includes("position")
+        )
+          row.role = v;
+        else if (h.includes("email") || h.includes("mail")) row.email = v;
+        else if (h.includes("linkedin") || h.includes("link")) row.linkedin = v;
+        else if (h.includes("location") || h.includes("city")) row.location = v;
+      });
+      return row;
+    })
+    .filter((r) => r.email || r.name);
 }
 
 function guessHeaders(count: number): string[] {
@@ -87,7 +108,10 @@ export function PasteImport({
 
   const handleParse = () => {
     const rows = detectAndParse(raw);
-    if (!rows.length) { toast("warning", "No data detected", "Check the format and try again."); return; }
+    if (!rows.length) {
+      toast("warning", "No data detected", "Check the format and try again.");
+      return;
+    }
     setPreview(rows);
     setStep("preview");
   };
@@ -95,7 +119,11 @@ export function PasteImport({
   const handleImport = () => {
     startTransition(async () => {
       const res = await importRecruiters(preview);
-      toast("success", `Imported ${res.count} recruiters`, res.skipped ? `${res.skipped} duplicates skipped` : undefined);
+      toast(
+        "success",
+        `Imported ${res.count} recruiters`,
+        res.skipped ? `${res.skipped} duplicates skipped` : undefined,
+      );
       onImport(preview);
     });
   };
@@ -105,41 +133,54 @@ export function PasteImport({
       {step === "input" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <p style={{ fontSize: 13.5, color: "var(--color-text-muted)" }}>
-            Paste data from Excel, Google Sheets, CSV, or .env format. We&apos;ll auto-detect the format.
+            Paste data from Excel, Google Sheets or CSV format. We&apos;ll
+            auto-detect the format.
           </p>
-          <div style={{
-            background: "var(--color-muted)", borderRadius: "var(--radius-md)",
-            padding: "10px 12px", fontSize: 12, color: "var(--color-text-dim)",
-            fontFamily: "var(--font-mono)", borderLeft: "2px solid var(--color-border)",
-          }}>
-            <div style={{ marginBottom: 8, fontWeight: 600, color: "var(--color-text-muted)" }}>Accepted formats:</div>
-            CSV: John Doe,Google,SDE Recruiter,john@google.com<br />
-            TSV: John[tab]Google[tab]john@google.com<br />
-            .env: NAME=John{"\n"}EMAIL=john@google.com
-          </div>
           <Textarea
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
             placeholder="Paste your recruiter data here…"
-            className="min-h-[160px] font-mono text-[12.5px] resize-y"
+            className="min-h-40 text-[12.5px] resize-none"
           />
           <div style={{ display: "flex", gap: 8 }}>
             <Button onClick={handleParse} disabled={!raw.trim()}>
-              <Wand2 size={14} className="mr-2" /> Parse & Preview
+              Parse & Preview
             </Button>
-            <Button onClick={onClose} variant="ghost">Cancel</Button>
+            <Button onClick={onClose} variant="ghost">
+              Cancel
+            </Button>
           </div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <p style={{ fontSize: 13.5, color: "var(--color-text-muted)" }}>
-            Found <strong style={{ color: "var(--color-text)" }}>{preview.length} rows</strong>. Review before importing:
+            Found{" "}
+            <strong style={{ color: "var(--color-text)" }}>
+              {preview.length} rows
+            </strong>
+            . Review before importing:
           </p>
-          <div style={{ maxHeight: 300, overflow: "auto", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)" }}>
+          <div
+            style={{
+              maxHeight: 300,
+              overflow: "auto",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)",
+            }}
+          >
             <table className="data-table">
               <thead>
                 <tr>
-                  {["Name", "Company", "Role", "Email"].map((h) => <th key={h}>{h}</th>)}
+                  {[
+                    "Name",
+                    "Company",
+                    "Role",
+                    "Email",
+                    "Linkedin",
+                    "Location",
+                  ].map((h) => (
+                    <th key={h}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -149,23 +190,40 @@ export function PasteImport({
                     <td>{row.company || "—"}</td>
                     <td>{row.role || "—"}</td>
                     <td>{row.email || "—"}</td>
+                    <td>{row.linkedin || "—"}</td>
+                    <td>{row.location || "—"}</td>
                   </tr>
                 ))}
                 {preview.length > 20 && (
-                  <tr><td colSpan={4} style={{ textAlign: "center", color: "var(--color-text-muted)", fontSize: 12 }}>
-                    …and {preview.length - 20} more
-                  </td></tr>
+                  <tr>
+                    <td
+                      colSpan={4}
+                      style={{
+                        textAlign: "center",
+                        color: "var(--color-text-muted)",
+                        fontSize: 12,
+                      }}
+                    >
+                      …and {preview.length - 20} more
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <Button onClick={handleImport} disabled={pending}>
-              {pending ? <Loader2 size={14} className="animate-spin mr-2" /> : null}
+              {pending ? (
+                <Loader2 size={14} className="animate-spin mr-2" />
+              ) : null}
               Import {preview.length} Recruiters
             </Button>
-            <Button onClick={() => setStep("input")} variant="secondary">← Back</Button>
-            <Button onClick={onClose} variant="ghost">Cancel</Button>
+            <Button onClick={() => setStep("input")} variant="secondary">
+              Back
+            </Button>
+            <Button onClick={onClose} variant="ghost">
+              Cancel
+            </Button>
           </div>
         </div>
       )}

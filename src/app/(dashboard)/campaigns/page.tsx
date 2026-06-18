@@ -49,17 +49,7 @@ export default async function CampaignsPage({
     <div>
       <CampaignAutoRefresh hasRunning={hasRunning} />
 
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.02em" }}>Campaigns</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: 14, marginTop: 4 }}>
-            {campaigns.length} campaigns
-          </p>
-        </div>
-        <div className="flex sm:w-auto gap-2">
-          <NewCampaignModal smtpAccounts={smtpAccounts} templates={templates} />
-        </div>
-      </div>
+
 
       {/* Quick Setup Banner */}
       {smtpAccounts.length === 0 && (
@@ -102,8 +92,15 @@ export default async function CampaignsPage({
         </div>
       )}
 
-      {/* Search */}
-      <SearchInput placeholder="Search campaigns…" />
+      {/* Search and Actions */}
+      <div className="flex items-center justify-between gap-4 mb-5">
+        <div className="flex-1">
+          <SearchInput placeholder="Search campaigns…" />
+        </div>
+        <div className="flex sm:w-auto gap-2">
+          <NewCampaignModal smtpAccounts={smtpAccounts} templates={templates} />
+        </div>
+      </div>
 
       {/* Table */}
       <CampaignsTable campaigns={campaigns} />

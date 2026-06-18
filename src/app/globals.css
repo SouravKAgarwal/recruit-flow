@@ -84,10 +84,22 @@ body {
 }
 
 /* ---- Focus ---- */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
+*:focus,
+*:focus-visible,
+*:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: 0 0 transparent !important;
+  --tw-ring-offset-shadow: 0 0 transparent !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.input-base:focus,
+.btn:focus-visible {
+  border-color: var(--color-primary);
+  border-width: 1px;
 }
 
 /* ---- Keyframes ---- */
@@ -285,7 +297,7 @@ body {
 }
 .input-base:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-muted);
+  box-shadow: none;
 }
 
 /* ---- Button base ---- */
@@ -427,10 +439,8 @@ body {
 .gmail-chrome {
   background: #f6f8fc;
   border-radius: var(--radius-lg);
-  overflow: hidden;
   font-family: "Google Sans", Arial, sans-serif;
   color: #202124;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 /* ---- Drop zone ---- */
@@ -664,7 +674,11 @@ body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    --tw-ring-color: transparent !important;
+    --tw-ring-shadow: 0 0 transparent !important;
+    --tw-ring-offset-shadow: 0 0 transparent !important;
+    outline: none !important;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;

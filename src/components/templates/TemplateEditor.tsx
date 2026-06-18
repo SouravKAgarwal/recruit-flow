@@ -21,11 +21,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Save, Loader2 } from "lucide-react";
+import {
+  Trash2,
+  Loader2,
+  Minus,
+  Maximize2,
+  X,
+  MoreVertical,
+} from "lucide-react";
 
 interface Template {
   id: string;
@@ -34,14 +38,6 @@ interface Template {
   body: string;
   updatedAt: Date;
 }
-
-const VARIABLES = [
-  "{{name}}",
-  "{{company}}",
-  "{{role}}",
-  "{{resume_link}}",
-  "{{custom}}",
-];
 
 export function TemplateEditor({
   initialTemplate,
@@ -88,10 +84,6 @@ export function TemplateEditor({
     });
   };
 
-  const handleNew = () => {
-    router.push("/templates");
-  };
-
   const handleDelete = () => {
     if (!initialTemplate) return;
     startTransition(async () => {
@@ -105,155 +97,131 @@ export function TemplateEditor({
     });
   };
 
-  const insertVariable = (v: string) => {
-    setBody((prev) => prev + v);
-  };
-
   return (
-    <div className="flex flex-col h-full gap-4">
-      {/* Header Toolbar */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {initialTemplate && (
-          <AlertDialog>
-            <AlertDialogTrigger render={<Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" disabled={isPending} />}>
-              <Trash2 size={15} className="mr-1" /> Delete
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  Delete &quot;{name}&quot;?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  this template from your database.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-        <Button onClick={handleNew} variant="secondary" size="sm" disabled={isPending}>
-          <Plus size={15} className="mr-1" /> New
-        </Button>
-        <Button onClick={handleSave} size="sm" disabled={isPending}>
-          {isPending ? <Loader2 size={15} className="mr-1 animate-spin" /> : <Save size={15} className="mr-1" />}
-          Save
-        </Button>
+    <div className="flex flex-col lg:flex-row h-full gap-8 relative items-stretch">
+      <div className="flex-1 min-w-0 flex flex-col h-full">
+        <div className="w-full h-full bg-white rounded-xl shadow-xl flex flex-col border border-gray-200 overflow-hidden">
+          <div className="bg-[#f2f6fc] px-4 py-2.5 flex items-center justify-between border-b border-gray-200/60">
+            <span className="text-sm font-medium text-[#202124]">
+              {initialTemplate ? `Editing Template` : "New Template"}
+            </span>
+            <div className="flex items-center gap-3">
+              <Minus
+                size={16}
+                className="text-[#5f6368] hover:text-[#202124] cursor-pointer"
+              />
+              <Maximize2
+                size={14}
+                className="text-[#5f6368] hover:text-[#202124] cursor-pointer"
+              />
+              <X
+                size={18}
+                className="text-[#5f6368] hover:text-[#202124] cursor-pointer"
+                onClick={() => router.push("/templates")}
+              />
+            </div>
+          </div>
+
+          <div className="px-4 py-1.5 border-b border-gray-100 flex items-center gap-2 group focus-within:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
+            <span className="text-[#5f6368] text-[13px] w-12 shrink-0 select-none">
+              Name
+            </span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isPending}
+              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] py-1 bg-transparent"
+              placeholder="Template Name"
+            />
+          </div>
+
+          {/* Subject Field */}
+          <div className="px-4 py-1.5 border-b border-gray-100 flex items-center group focus-within:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              disabled={isPending}
+              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] font-medium py-1 bg-transparent"
+              placeholder="Subject"
+            />
+          </div>
+
+          {/* Body Textarea */}
+          <div className="px-4 py-3 flex-1 flex flex-col min-h-0 bg-white cursor-text">
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              disabled={isPending}
+              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] resize-none leading-relaxed font-sans"
+              placeholder=""
+              spellCheck={false}
+            />
+          </div>
+
+          {/* Footer Toolbar */}
+          <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100 bg-white">
+            <div className="flex items-center gap-4">
+              {/* Save Button */}
+              <Button
+                onClick={handleSave}
+                disabled={isPending}
+                variant="outline"
+                className="rounded-full shadow-sm px-6"
+              >
+                {isPending ? (
+                  <Loader2 size={16} className="animate-spin mr-2" />
+                ) : null}
+                Save Template
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-1 text-[#444746]">
+              <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
+                <MoreVertical size={18} />
+              </button>
+
+              {initialTemplate && (
+                <AlertDialog>
+                  <AlertDialogTrigger render={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isPending}
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    />
+                  }>
+                    <Trash2 size={18} />
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Delete &quot;{name}&quot;?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        delete this template.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-[#d93025] hover:bg-[#b3261e] text-white"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Main Content: Split Pane */}
-      <div className="flex-1 min-h-0 glass rounded-xl border border-border/50 shadow-sm overflow-hidden flex flex-col lg:flex-row lg:divide-x divide-border">
-        {/* LEFT PANE: Editor */}
-        <div className="flex-1 flex flex-col h-full overflow-y-auto p-6 lg:p-8 relative">
-          <div className="flex flex-col gap-6 flex-1 min-h-[500px]">
-            <div>
-              <Label
-                style={{
-                  display: "block",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--color-text-muted)",
-                  marginBottom: 5,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Template Name
-              </Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Template Name"
-                disabled={isPending}
-              />
-            </div>
-
-            <div>
-              <Label
-                style={{
-                  display: "block",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--color-text-muted)",
-                  marginBottom: 5,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                }}
-              >
-                Subject Line
-              </Label>
-              <Input
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Subject Line"
-                disabled={isPending}
-              />
-            </div>
-
-            <div className="flex flex-col flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <Label
-                  style={{
-                    display: "block",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "var(--color-text-muted)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    margin: 0,
-                  }}
-                >
-                  Email Body
-                </Label>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-wider">
-                    Variables:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {VARIABLES.map((v) => (
-                      <Button
-                        key={v}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => insertVariable(v)}
-                        title={`Insert ${v}`}
-                        className="h-6 px-2 text-[11px] font-mono bg-muted/40"
-                        disabled={isPending}
-                      >
-                        {v}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <Textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Email body…"
-                className="flex-1 resize-none font-mono text-[14px] leading-relaxed p-4 min-h-[350px]"
-                spellCheck={false}
-                disabled={isPending}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT PANE: Live Preview */}
-        <div className="flex-1 h-full overflow-y-auto bg-muted/20 p-6 lg:p-8 flex flex-col items-center">
-          <div className="w-full max-w-xl">
-            <GmailPreview subject={subject} body={body} />
-          </div>
-        </div>
+      {/* RIGHT PANE: Live Preview */}
+      <div className="flex-1 min-w-0 h-full flex flex-col relative">
+        <GmailPreview subject={subject} body={body} />
       </div>
     </div>
   );

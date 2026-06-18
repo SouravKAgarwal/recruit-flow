@@ -382,7 +382,7 @@ export async function runModernCampaign(campaignId: string) {
       secure: smtp.port === 465,
       auth: {
         user: smtp.username,
-        pass: Buffer.from(smtp.encryptedPassword, "base64").toString("utf-8"),
+        pass: smtp.encryptedPassword,
       },
       tls: {
         rejectUnauthorized: false,

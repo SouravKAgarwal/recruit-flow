@@ -82,12 +82,24 @@ export async function bulkDeleteCampaigns(ids: string[]) {
 
 export async function getEmailHistory() {
   const { userId } = await requireAuth();
-  return prisma.emailLog.findMany({
+  const logs = await prisma.emailLog.findMany({
     where: { userId },
     orderBy: { sentAt: "desc" },
     take: 200,
-    include: { recruiter: true, smtpAccount: true, template: true, resume: true },
+    include: { recruiter: true, template: true, resume: true },
   });
+
+  const smtpIds = [...new Set(logs.map(l => l.smtpAccountId).filter(Boolean))] as string[];
+  const smtps = await prisma.smtpAccount.findMany({
+    where: { id: { in: smtpIds } },
+  });
+
+  const smtpMap = Object.fromEntries(smtps.map(s => [s.id, s]));
+
+  return logs.map(log => ({
+    ...log,
+    smtpAccount: log.smtpAccountId ? smtpMap[log.smtpAccountId] : null,
+  }));
 }
 
 export async function getAnalytics() {

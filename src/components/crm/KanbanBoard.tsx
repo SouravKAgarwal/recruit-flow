@@ -47,12 +47,7 @@ export function KanbanBoard({ recruiters: initial }: { recruiters: Recruiter[] }
 
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800 }}>CRM Pipeline</h1>
-        <p style={{ color: "var(--color-text-muted)", fontSize: 14, marginTop: 4 }}>
-          Drag and drop recruiters through your pipeline stages
-        </p>
-      </div>
+
 
       <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16 }}>
         {STAGES.map((stage) => {

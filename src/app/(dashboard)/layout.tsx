@@ -19,7 +19,6 @@ export default async function DashboardLayout({
   const user = {
     name: session.name,
     email: session.email,
-    avatar: "/avatars/default.png", // Fallback avatar
   };
 
   return (

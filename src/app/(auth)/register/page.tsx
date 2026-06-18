@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { register, type AuthState } from "@/app/actions/auth";
-import { Zap, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

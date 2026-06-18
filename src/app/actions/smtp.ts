@@ -5,14 +5,7 @@ import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import nodemailer from "nodemailer";
 
-function encrypt(text: string): string {
-  // Simple reversible encoding – in production use KMS/AES
-  return Buffer.from(text, "utf-8").toString("base64");
-}
 
-function decrypt(encoded: string): string {
-  return Buffer.from(encoded, "base64").toString("utf-8");
-}
 
 export async function getSmtpAccounts() {
   const { userId } = await requireAuth();
@@ -65,7 +58,7 @@ export async function addSmtpAccount(prevState: SmtpActionState, formData: FormD
         host,
         port,
         username,
-        encryptedPassword: encrypt(password),
+        encryptedPassword: password,
         tls,
       },
     });
@@ -100,7 +93,7 @@ export async function updateSmtpAccount(id: string, prevState: SmtpActionState, 
         host,
         port,
         username,
-        encryptedPassword: password ? encrypt(password) : account.encryptedPassword,
+        encryptedPassword: password ? password : account.encryptedPassword,
         tls,
       },
     });
@@ -135,7 +128,7 @@ export async function testSmtpConnection(id: string) {
       host: account.host,
       port: account.port,
       secure: account.port === 465,
-      auth: { user: account.username, pass: decrypt(account.encryptedPassword) },
+      auth: { user: account.username, pass: account.encryptedPassword },
       tls: { rejectUnauthorized: false },
     });
     await transporter.verify();

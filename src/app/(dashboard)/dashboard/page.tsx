@@ -14,12 +14,7 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div>
-        <h1 style={{ fontSize: 28, fontWeight: 800 }}>Overview</h1>
-        <p style={{ color: "var(--color-text-muted)", fontSize: 14, marginTop: 4 }}>
-          Your campaign performance and active pipeline
-        </p>
-      </div>
+
 
       {/* Stats Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>

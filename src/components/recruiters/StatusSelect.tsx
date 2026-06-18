@@ -44,7 +44,7 @@ export function StatusSelect({ id, status: initial }: { id: string; status: stri
   return (
     <Select value={s} onValueChange={handleStatusChange} disabled={isPending}>
       <SelectTrigger
-        className="badge h-6 border-none ring-0 focus:ring-0 shadow-none hover:opacity-80 transition-opacity"
+        className="rounded-sm! badge h-6 border-none ring-0 focus:ring-0 shadow-none hover:opacity-80 transition-opacity"
         style={{
           background: c.bg,
           color: c.color,

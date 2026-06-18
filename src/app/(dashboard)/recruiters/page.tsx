@@ -42,22 +42,11 @@ export default async function RecruitersPage({
   return (
     <SelectionProvider>
       <div className="flex items-center justify-between gap-4 mb-5">
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800 }}>Recruiters</h1>
-          <p
-            style={{
-              color: "var(--color-text-muted)",
-              fontSize: 14,
-              marginTop: 4,
-            }}
-          >
-            {recruiters.length} contacts
-          </p>
+        <div className="flex-1">
+          <SearchInput placeholder="Search recruiters…" />
         </div>
         <RecruitersActionBar recruiters={recruiters} />
       </div>
-
-      <SearchInput placeholder="Search recruiters…" />
 
       <RecruitersDataTable recruiters={recruiters} />
     </SelectionProvider>

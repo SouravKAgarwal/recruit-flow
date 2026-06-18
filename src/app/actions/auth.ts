@@ -99,3 +99,60 @@ export async function logout() {
   session.destroy();
   redirect("/login");
 }
+
+const updateSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  email: z.string().email("Please enter a valid email address."),
+  password: z.string().optional(),
+  avatar: z.string().optional(),
+});
+
+export async function updateUser(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const session = await getSession();
+  if (!session.userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const data = Object.fromEntries(formData);
+  const result = updateSchema.safeParse(data);
+
+  if (!result.success) {
+    return {
+      errors: result.error.flatten().fieldErrors,
+    };
+  }
+
+  const { name, email: rawEmail, password, avatar } = result.data;
+  const email = rawEmail.toLowerCase();
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing && existing.id !== session.userId) {
+      return { error: "An account with this email already exists." };
+    }
+
+    const updateData: any = { name, email };
+    if (password && password.length >= 8) {
+      updateData.passwordHash = await bcrypt.hash(password, 12);
+    } else if (password && password.length > 0 && password.length < 8) {
+      return { errors: { password: ["Password must be at least 8 characters."] } };
+    }
+    if (avatar) {
+      updateData.avatar = avatar;
+    }
+
+    const user = await prisma.user.update({
+      where: { id: session.userId },
+      data: updateData,
+    });
+
+    session.email = user.email;
+    session.name = user.name;
+    await session.save();
+    
+    return { error: undefined }; // success
+  } catch (error) {
+    console.error(error);
+    return { error: "An unexpected error occurred. Please try again." };
+  }
+}

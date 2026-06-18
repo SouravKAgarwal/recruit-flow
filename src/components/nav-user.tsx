@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react"
 
 import {
   Avatar,
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/sidebar"
 import { EllipsisVerticalIcon, CircleUserRoundIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
 import { logout } from "@/app/actions/auth"
+import { UserModal } from "@/components/layout/UserModal"
 
 export function NavUser({
   user,
@@ -32,6 +34,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const [isModalOpen, setIsModalOpen] = useState(false)
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -75,7 +78,7 @@ export function NavUser({
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsModalOpen(true)} style={{ cursor: "pointer" }}>
                 <CircleUserRoundIcon />
                 Account
               </DropdownMenuItem>
@@ -96,6 +99,7 @@ export function NavUser({
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+      <UserModal open={isModalOpen} onClose={() => setIsModalOpen(false)} user={user} />
     </SidebarMenu>
   )
 }

@@ -88,12 +88,7 @@ export function ResumeManager({ resumes: initial }: { resumes: Resume[] }) {
 
   return (
     <div>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800 }}>Resumes</h1>
-        <p style={{ color: "var(--color-text-muted)", fontSize: 13.5, marginBottom: 20 }}>
-          No resumes found. Try adjusting your search or upload a new one.
-        </p>
-      </div>
+
 
       {/* Drop zone */}
       <div

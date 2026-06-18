@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -17,6 +17,7 @@ model User {
   email        String   @unique
   name         String
   passwordHash String
+  avatar       String?
   createdAt    DateTime @default(now())
 
   smtpAccounts   SmtpAccount[]
