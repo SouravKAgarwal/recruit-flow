@@ -1,12 +1,12 @@
 import crypto from "crypto";
 
-export function getPublicKey() {
+function getPublicKey() {
   const key = process.env.ENCRYPTION_PUBLIC_KEY;
   if (!key) throw new Error("ENCRYPTION_PUBLIC_KEY is missing");
   return key;
 }
 
-export function getPrivateKey() {
+function getPrivateKey() {
   const key = process.env.ENCRYPTION_PRIVATE_KEY;
   if (!key) throw new Error("ENCRYPTION_PRIVATE_KEY is missing");
   return key;

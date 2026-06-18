@@ -16,7 +16,6 @@ export default async function TemplatesPage({
   const { q, sort } = await searchParams;
   let templates = await getTemplates();
 
-  // Apply search filtering
   if (q) {
     const query = q.toLowerCase();
     templates = templates.filter(
@@ -26,7 +25,6 @@ export default async function TemplatesPage({
     );
   }
 
-  // Apply sorting
   if (sort) {
     const [key, direction] = sort.split(":");
     templates.sort((a: any, b: any) => {

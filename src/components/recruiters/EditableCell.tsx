@@ -21,13 +21,13 @@ export function EditableCell({
 
   const handleSave = (newValue: string) => {
     if (newValue === initial) return;
-    
+
     startTransition(async () => {
       try {
         await updateRecruiter(id, { [field]: newValue });
       } catch (err: any) {
         toast("error", "Failed to update", err.message);
-        setVal(initial); // revert on error
+        setVal(initial);
       }
     });
   };

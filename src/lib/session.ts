@@ -8,7 +8,7 @@ export interface SessionData {
 }
 
 const sessionOptions: SessionOptions = {
-  password: process.env.SESSION_SECRET ?? "recruitflow-ai-secret-32-chars-min!!",
+  password: process.env.SESSION_SECRET!,
   cookieName: "rf_session",
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",

@@ -12,18 +12,7 @@ export async function getRecruiters() {
   });
 }
 
-export async function createRecruiter(data: {
-  name?: string; company?: string; role?: string;
-  email?: string; linkedin?: string; location?: string;
-  status?: string; tags?: string; notes?: string;
-}) {
-  const { userId } = await requireAuth();
-  const rec = await prisma.recruiter.create({
-    data: { userId, ...data },
-  });
-  revalidatePath("/recruiters");
-  return rec;
-}
+
 
 export async function updateRecruiter(id: string, data: Partial<{
   name: string; company: string; role: string; email: string;

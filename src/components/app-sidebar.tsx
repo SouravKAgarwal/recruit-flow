@@ -37,9 +37,9 @@ export function AppSidebar({
   const navMain = [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "/",
       icon: <LayoutDashboard />,
-      isActive: pathname === "/dashboard",
+      isActive: pathname === "/",
     },
     {
       title: "Recruiters",
@@ -90,7 +90,7 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
+            <SidebarMenuButton size="lg" render={<Link href="/" />}>
               <Hexagon
                 className="size-5!"
                 style={{ color: "var(--color-primary)" }}

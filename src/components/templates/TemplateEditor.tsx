@@ -146,7 +146,6 @@ export function TemplateEditor({
             />
           </div>
 
-          {/* Body Textarea */}
           <div className="px-4 py-3 flex-1 flex flex-col min-h-0 bg-white cursor-text">
             <textarea
               value={body}
@@ -158,10 +157,8 @@ export function TemplateEditor({
             />
           </div>
 
-          {/* Footer Toolbar */}
           <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100 bg-white">
             <div className="flex items-center gap-4">
-              {/* Save Button */}
               <Button
                 onClick={handleSave}
                 disabled={isPending}
@@ -182,14 +179,16 @@ export function TemplateEditor({
 
               {initialTemplate && (
                 <AlertDialog>
-                  <AlertDialogTrigger render={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={isPending}
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    />
-                  }>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      />
+                    }
+                  >
                     <Trash2 size={18} />
                   </AlertDialogTrigger>
                   <AlertDialogContent>

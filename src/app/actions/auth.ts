@@ -55,7 +55,7 @@ export async function register(prevState: AuthState, formData: FormData): Promis
     return { error: "An unexpected error occurred. Please try again." };
   }
 
-  redirect("/dashboard");
+  redirect("/");
 }
 
 export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
@@ -91,7 +91,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
     return { error: "An unexpected error occurred. Please try again." };
   }
 
-  redirect("/dashboard");
+  redirect("/");
 }
 
 export async function logout() {

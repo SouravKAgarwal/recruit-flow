@@ -8,7 +8,6 @@ interface GmailPreviewProps {
   body: string;
   senderName?: string;
   senderEmail?: string;
-  hasAttachment?: boolean;
 }
 
 function interpolate(text: string) {
@@ -25,7 +24,6 @@ export function GmailPreview({
   body,
   senderName = "You",
   senderEmail = "you@example.com",
-  hasAttachment = true,
 }: GmailPreviewProps) {
   const renderedSubject = useMemo(
     () => interpolate(subject) || "(no subject)",
@@ -40,7 +38,6 @@ export function GmailPreview({
 
   return (
     <div className="gmail-chrome bg-white rounded-xl border border-border/60 flex-1 flex flex-col transition-all duration-300 overflow-hidden">
-      {/* Gmail top bar */}
       <div className="bg-[#f6f8fc] px-4 py-2.5 border-b border-[#e0e0e0] flex items-center gap-3 shrink-0">
         <div className="flex gap-1.5">
           {["#ff5f56", "#ffbd2e", "#27c93f"].map((c) => (
@@ -56,17 +53,16 @@ export function GmailPreview({
         </div>
       </div>
 
-      {/* Email header */}
       <div className="px-5 pt-5 pb-3 border-b border-[#e0e0e0] bg-white shrink-0">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-normal text-[#202124] break-words">
+          <h3 className="text-lg font-normal text-[#202124] wrap-break-words">
             {renderedSubject}
           </h3>
           <Star size={16} className="text-[#bdbdbd] shrink-0 ml-3" />
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-400 flex items-center justify-center text-white text-base font-bold shrink-0 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-linear-to-br from-indigo-500 to-indigo-400 flex items-center justify-center text-white text-base font-bold shrink-0 shadow-sm">
             {senderName.charAt(0).toUpperCase()}
           </div>
           <div>
@@ -85,9 +81,8 @@ export function GmailPreview({
         </div>
       </div>
 
-      {/* Body */}
       <div className="px-5 py-5 bg-white flex-1 overflow-y-auto min-h-0">
-        <div className="text-[14px] leading-relaxed text-[#202124] whitespace-pre-wrap break-words font-sans">
+        <div className="text-[14px] leading-relaxed text-[#202124] whitespace-pre-wrap wrap-break-words font-sans">
           {renderedBody || (
             <span className="text-[#bdbdbd] italic">
               Your email body will appear here…
@@ -96,25 +91,21 @@ export function GmailPreview({
         </div>
       </div>
 
-      {/* Attachment */}
-      {hasAttachment && (
-        <div className="px-5 pb-4 bg-white shrink-0">
-          <div className="inline-flex items-center gap-3 px-3 py-2 border border-[#e0e0e0] rounded-lg text-[#202124] hover:bg-gray-50 transition-colors cursor-pointer">
-            <div className="w-8 h-8 rounded-md bg-[#ea4335] flex items-center justify-center shrink-0">
-              <span className="text-white text-[9px] font-bold tracking-wider">
-                PDF
-              </span>
-            </div>
-            <div className="pr-4">
-              <p className="text-xs font-semibold leading-tight">Resume.pdf</p>
-              <p className="text-[#5f6368] text-[10px] leading-tight">128 KB</p>
-            </div>
-            <Paperclip size={14} className="text-[#5f6368] ml-auto" />
+      <div className="px-5 pb-4 bg-white shrink-0">
+        <div className="inline-flex items-center gap-3 px-3 py-2 border border-[#e0e0e0] rounded-lg text-[#202124] hover:bg-gray-50 transition-colors cursor-pointer">
+          <div className="w-8 h-8 rounded-md bg-[#ea4335] flex items-center justify-center shrink-0">
+            <span className="text-white text-[9px] font-bold tracking-wider">
+              PDF
+            </span>
           </div>
+          <div className="pr-4">
+            <p className="text-xs font-semibold leading-tight">Resume.pdf</p>
+            <p className="text-[#5f6368] text-[10px] leading-tight">128 KB</p>
+          </div>
+          <Paperclip size={14} className="text-[#5f6368] ml-auto" />
         </div>
-      )}
+      </div>
 
-      {/* Footer */}
       <div className="bg-[#f6f8fc] border-t border-[#e0e0e0] px-5 py-2.5 flex gap-4 shrink-0">
         {["Reply", "Reply all", "Forward"].map((a) => (
           <span

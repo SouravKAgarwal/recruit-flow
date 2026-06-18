@@ -1,24 +1,7 @@
-"use client";
-
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { deleteTemplate } from "@/app/actions/templates";
-import { useToast } from "@/components/ui/Toast";
-import { Button } from "@/components/ui/button";
-import { Trash2, Edit2, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { SortableHeader } from "@/components/ui/SortableHeader";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { TemplateRowActions } from "./TemplateRowActions";
 
 interface Template {
   id: string;
@@ -28,22 +11,6 @@ interface Template {
 }
 
 export function TemplatesTable({ templates }: { templates: Template[] }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
-
-  const handleDelete = (id: string, name: string) => {
-    startTransition(async () => {
-      try {
-        await deleteTemplate(id);
-        toast("success", `Template "${name}" deleted`);
-        router.refresh();
-      } catch (err: any) {
-        toast("error", "Error deleting template", err.message);
-      }
-    });
-  };
-
   return (
     <div className="glass" style={{ overflow: "auto" }}>
       <table className="data-table">
@@ -121,58 +88,7 @@ export function TemplatesTable({ templates }: { templates: Template[] }) {
                   </div>
                 </td>
                 <td>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      gap: 6,
-                    }}
-                  >
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => router.push(`/templates/${t.id}`)}
-                      disabled={isPending}
-                      className="h-7 w-7 rounded-md"
-                      title="Edit template"
-                    >
-                      <Edit2 size={13} />
-                    </Button>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger render={
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="h-7 w-7 rounded-md"
-                          disabled={isPending}
-                          title="Delete template"
-                        />
-                      }>
-                        <Trash2 size={13} />
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Delete &quot;{t.name}&quot;?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently
-                            delete this template.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(t.id, t.name)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  <TemplateRowActions id={t.id} name={t.name} />
                 </td>
               </tr>
             ))

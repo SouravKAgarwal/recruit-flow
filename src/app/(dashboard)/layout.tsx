@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -6,11 +7,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+async function DynamicAppSidebar() {
   const session = await getSession();
   if (!session.userId) {
     redirect("/login");
@@ -21,6 +18,14 @@ export default async function DashboardLayout({
     email: session.email,
   };
 
+  return <AppSidebar variant="inset" user={user} />;
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <ToastProvider>
       <SidebarProvider
@@ -31,13 +36,17 @@ export default async function DashboardLayout({
           } as React.CSSProperties
         }
       >
-        <AppSidebar variant="inset" user={user} />
+        <Suspense fallback={<div style={{ width: 256 }} className="border-r border-border shrink-0" />}>
+          <DynamicAppSidebar />
+        </Suspense>
         <SidebarInset>
           <SiteHeader />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6 lg:p-8 w-full max-w-350 mx-auto">
-                {children}
+                <Suspense fallback={null}>
+                  {children}
+                </Suspense>
               </div>
             </div>
           </div>

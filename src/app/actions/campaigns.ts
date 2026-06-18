@@ -56,6 +56,21 @@ export async function createCampaign(prevState: CampaignActionState, formData: F
   }
 }
 
+import { runModernCampaign } from "@/lib/mailer";
+
+export async function triggerCampaign(campaignId: string) {
+  if (!campaignId) {
+    throw new Error("Missing campaign ID");
+  }
+
+  // Start campaign execution asynchronously in the background.
+  runModernCampaign(campaignId).catch((err) => {
+    console.error(`Background campaign execution for ${campaignId} failed:`, err);
+  });
+
+  return { success: true, message: "Campaign started successfully." };
+}
+
 export async function deleteCampaign(id: string) {
   const { userId } = await requireAuth();
   await prisma.emailLog.updateMany({
@@ -68,17 +83,7 @@ export async function deleteCampaign(id: string) {
   revalidatePath("/campaigns");
 }
 
-export async function bulkDeleteCampaigns(ids: string[]) {
-  const { userId } = await requireAuth();
-  await prisma.emailLog.updateMany({
-    where: { campaignId: { in: ids }, userId },
-    data: { campaignId: null },
-  });
-  await prisma.campaign.deleteMany({
-    where: { id: { in: ids }, userId },
-  });
-  revalidatePath("/campaigns");
-}
+
 
 export async function getEmailHistory() {
   const { userId } = await requireAuth();

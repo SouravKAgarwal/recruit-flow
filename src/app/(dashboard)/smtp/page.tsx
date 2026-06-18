@@ -1,5 +1,7 @@
 import { getSmtpAccounts } from "@/app/actions/smtp";
-import { SmtpManager } from "@/components/smtp/SmtpManager";
+import { SmtpTable } from "@/components/smtp/SmtpTable";
+import { AddSmtpButton } from "@/components/smtp/AddSmtpButton";
+import { SearchInput } from "@/components/ui/SearchInput";
 
 export const metadata = { title: "SMTP Accounts" };
 
@@ -37,7 +39,15 @@ export default async function SmtpPage({
 
   return (
     <div>
-      <SmtpManager accounts={accounts} />
+      <div className="flex items-center justify-between gap-4 mb-5">
+        <div className="flex-1">
+          <SearchInput placeholder="Search SMTP accounts…" />
+        </div>
+        <div className="flex sm:w-auto gap-2">
+          <AddSmtpButton />
+        </div>
+      </div>
+      <SmtpTable accounts={accounts} />
     </div>
   );
 }

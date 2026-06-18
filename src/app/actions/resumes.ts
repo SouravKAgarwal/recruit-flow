@@ -77,3 +77,29 @@ export async function deleteResume(id: string) {
   await prisma.resume.delete({ where: { id } });
   revalidatePath("/resumes");
 }
+
+export async function downloadResumeAction(filename: string) {
+  const { userId } = await requireAuth();
+
+  const resume = await prisma.resume.findFirst({
+    where: { filename, userId },
+  });
+  
+  if (!resume) {
+    throw new Error("Resume not found");
+  }
+
+  const filePath = path.join(process.cwd(), "uploads", "resumes", filename);
+  try {
+    const fileBuffer = await fs.readFile(filePath);
+    const base64Data = fileBuffer.toString("base64");
+    return {
+      success: true,
+      filename: resume.originalName,
+      base64Data,
+      mimeType: "application/pdf",
+    };
+  } catch (error: any) {
+    throw new Error("File not found");
+  }
+}

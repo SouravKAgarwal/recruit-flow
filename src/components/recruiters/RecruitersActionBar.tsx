@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Download, Upload, Filter, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSelection } from "./SelectionContext";
-import { PasteImport } from "./PasteImport";
-import { FileImport } from "./FileImport";
+import dynamic from "next/dynamic";
+const PasteImport = dynamic(() => import("./PasteImport").then(mod => mod.PasteImport), { ssr: false });
+const FileImport = dynamic(() => import("./FileImport").then(mod => mod.FileImport), { ssr: false });
 import {
   AlertDialog,
   AlertDialogAction,

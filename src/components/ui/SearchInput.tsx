@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useTransition, useState, useEffect, useRef } from "react";
 
@@ -34,7 +34,7 @@ export function SearchInput({ placeholder = "Search..." }: { placeholder?: strin
       startTransition(() => {
         router.push(`${pathname}?${params.toString()}`);
       });
-    }, 300);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [query, pathname, router, searchParams]);
@@ -50,22 +50,35 @@ export function SearchInput({ placeholder = "Search..." }: { placeholder?: strin
 
   return (
     <div style={{ position: "relative", marginBottom: 16 }}>
-      <Search
-        size={14}
-        style={{
-          position: "absolute",
-          left: 12,
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "var(--color-text-muted)",
-        }}
-      />
+      {isPending ? (
+        <Loader2
+          size={14}
+          className="animate-spin"
+          style={{
+            position: "absolute",
+            left: 12,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "var(--color-primary)",
+          }}
+        />
+      ) : (
+        <Search
+          size={14}
+          style={{
+            position: "absolute",
+            left: 12,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "var(--color-text-muted)",
+          }}
+        />
+      )}
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
         className="pl-9 max-w-[360px]"
-        disabled={isPending}
       />
     </div>
   );

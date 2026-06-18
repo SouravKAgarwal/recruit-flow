@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { deleteCampaign } from "@/app/actions/campaigns";
+import { deleteCampaign, triggerCampaign } from "@/app/actions/campaigns";
 import { useToast } from "@/components/ui/Toast";
 import { Trash2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,7 @@ export function CampaignRowActions({
   const handleLaunch = async () => {
     toast("info", "Campaign starting...");
     try {
-      const res = await fetch(`/api/campaigns/${id}/run`, { method: "POST" });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || "Failed to start");
+      await triggerCampaign(id);
       toast("success", "Campaign is now running in the background");
       router.refresh();
     } catch (err: any) {

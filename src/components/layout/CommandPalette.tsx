@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const COMMANDS = [
-  { id: "dashboard",  label: "Go to Dashboard",       icon: LayoutDashboard, href: "/dashboard" },
+  { id: "dashboard",  label: "Go to Dashboard",       icon: LayoutDashboard, href: "/" },
   { id: "recruiters", label: "Go to Recruiters",       icon: Users,           href: "/recruiters" },
   { id: "templates",  label: "Go to Templates",        icon: FileText,        href: "/templates" },
   { id: "campaigns",  label: "Go to Campaigns",        icon: Send,            href: "/campaigns" },
