@@ -1,0 +1,34 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import prisma from "@/lib/prisma";
+import { requireAuth } from "@/lib/session";
+
+export async function getTemplates() {
+  const { userId } = await requireAuth();
+  return prisma.emailTemplate.findMany({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+export async function createTemplate(data: { name: string; subject: string; body: string }) {
+  const { userId } = await requireAuth();
+  const tpl = await prisma.emailTemplate.create({
+    data: { userId, ...data },
+  });
+  revalidatePath("/templates");
+  return tpl;
+}
+
+export async function updateTemplate(id: string, data: { name?: string; subject?: string; body?: string }) {
+  const { userId } = await requireAuth();
+  await prisma.emailTemplate.updateMany({ where: { id, userId }, data });
+  revalidatePath("/templates");
+}
+
+export async function deleteTemplate(id: string) {
+  const { userId } = await requireAuth();
+  await prisma.emailTemplate.deleteMany({ where: { id, userId } });
+  revalidatePath("/templates");
+}
