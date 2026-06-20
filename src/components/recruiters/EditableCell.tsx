@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useOptimistic, useTransition } from "react";
 import { Input } from "@/components/ui/input";
 import { updateRecruiter } from "@/app/actions/recruiters";
 import { useToast } from "@/components/ui/Toast";
@@ -15,19 +15,20 @@ export function EditableCell({
   value: string;
 }) {
   const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(initial);
-  const [isPending, startTransition] = useTransition();
+  const [editVal, setEditVal] = useState(initial);
+  const [optimisticVal, setOptimisticVal] = useOptimistic(initial);
+  const [_, startTransition] = useTransition();
   const { toast } = useToast();
 
   const handleSave = (newValue: string) => {
     if (newValue === initial) return;
 
     startTransition(async () => {
+      setOptimisticVal(newValue);
       try {
         await updateRecruiter(id, { [field]: newValue });
-      } catch (err: any) {
-        toast("error", "Failed to update", err.message);
-        setVal(initial);
+      } catch (err) {
+        toast("error", "Failed to update", (err instanceof Error ? err.message : String(err)));
       }
     });
   };
@@ -35,42 +36,43 @@ export function EditableCell({
   if (editing) {
     return (
       <Input
-        value={val}
-        onChange={(e) => setVal(e.target.value)}
+        value={editVal}
+        onChange={(e) => setEditVal(e.target.value)}
         onBlur={() => {
-          handleSave(val);
+          handleSave(editVal);
           setEditing(false);
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            handleSave(val);
+            handleSave(editVal);
             setEditing(false);
           }
           if (e.key === "Escape") {
-            setVal(initial);
+            setEditVal(initial);
             setEditing(false);
           }
         }}
         autoFocus
         className="h-7 px-2 py-1 text-[13px] ring-0 focus-visible:ring-0 bg-background"
-        disabled={isPending}
       />
     );
   }
 
   return (
     <span
-      onClick={() => setEditing(true)}
+      onClick={() => {
+        setEditVal(optimisticVal);
+        setEditing(true);
+      }}
       style={{
         cursor: "text",
         display: "block",
         minWidth: 60,
         padding: "2px 0",
-        opacity: isPending ? 0.5 : 1,
       }}
       title="Click to edit"
     >
-      {val || <span style={{ color: "var(--color-text-dim)" }}>—</span>}
+      {optimisticVal || <span style={{ color: "var(--color-text-dim)" }}>—</span>}
     </span>
   );
 }

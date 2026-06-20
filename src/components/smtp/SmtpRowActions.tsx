@@ -33,8 +33,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { SmtpForm } from "./SmtpForm";
+import type { SmtpAccount } from "@prisma/client";
 
-export function SmtpRowActions({ account }: { account: any }) {
+export function SmtpRowActions({ account }: { account: SmtpAccount }) {
   const [editOpen, setEditOpen] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<boolean | null>(null);
@@ -68,7 +69,14 @@ export function SmtpRowActions({ account }: { account: any }) {
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 16,
+        }}
+      >
         <div style={{ marginRight: "auto" }}>
           {testResult === true && (
             <span

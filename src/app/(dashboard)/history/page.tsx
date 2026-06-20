@@ -8,6 +8,8 @@ import {
   FileText,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata = { title: "Email History" };
 
@@ -19,67 +21,38 @@ const STATUS_META: Record<string, { color: string; icon: React.ReactNode }> = {
   QUEUED: { color: "var(--color-text-muted)", icon: <Clock size={13} /> },
 };
 
-export default async function HistoryPage() {
+async function HistoryList() {
   const logs = await getEmailHistory();
 
   return (
     <div>
       {logs.length === 0 && (
-        <div className="glass" style={{ padding: 48, textAlign: "center" }}>
-          <Mail
-            size={40}
-            style={{ color: "var(--color-text-dim)", margin: "0 auto 16px" }}
-          />
-          <p style={{ fontWeight: 600, marginBottom: 8 }}>No emails sent yet</p>
-          <p style={{ color: "var(--color-text-muted)", fontSize: 13.5 }}>
+        <div className="glass p-12 text-center">
+          <Mail size={40} className="text-text-dim mx-auto mb-4" />
+          <p className="font-semibold mb-2">No emails sent yet</p>
+          <p className="text-[var(--color-text-muted)] text-[13.5px]">
             Send your first campaign to see history here
           </p>
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      <div className="flex flex-col">
         {logs.map((log, idx) => {
           const meta = STATUS_META[log.status] ?? STATUS_META.SENT;
           return (
-            <div
-              key={log.id}
-              style={{ display: "flex", gap: 16, position: "relative" }}
-            >
+            <div key={log.id} className="flex gap-4 relative">
               {/* Timeline line */}
               {idx < logs.length - 1 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 19,
-                    top: 40,
-                    bottom: 0,
-                    width: 1,
-                    background: "var(--color-border)",
-                  }}
-                />
+                <div className="absolute left-[19px] top-10 bottom-0 w-[1px] bg-[var(--color-border)]" />
               )}
 
               {/* Status dot */}
-              <div
-                style={{
-                  flexShrink: 0,
-                  width: 40,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  paddingTop: 14,
-                }}
-              >
+              <div className="shrink-0 w-10 flex flex-col items-center pt-[14px]">
                 <div
+                  className="w-7 h-7 rounded-full border flex items-center justify-center"
                   style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
                     background: `${meta.color}18`,
-                    border: `1px solid ${meta.color}40`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    borderColor: `${meta.color}40`,
                     color: meta.color,
                   }}
                 >
@@ -88,40 +61,11 @@ export default async function HistoryPage() {
               </div>
 
               {/* Content */}
-              <div
-                className="glass"
-                style={{
-                  flex: 1,
-                  padding: "14px 18px",
-                  marginBottom: 10,
-                  marginTop: 4,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    gap: 12,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        flexWrap: "wrap",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontWeight: 600,
-                          fontSize: 14,
-                          color: "var(--color-text)",
-                        }}
-                      >
+              <div className="glass flex-1 px-[18px] py-[14px] mb-2.5 mt-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <p className="font-semibold text-sm text-[var(--color-text)]">
                         {log.toEmail}
                       </p>
                       <span
@@ -135,95 +79,47 @@ export default async function HistoryPage() {
                       </span>
                     </div>
                     {log.subject && (
-                      <p
-                        style={{
-                          fontSize: 13,
-                          color: "var(--color-text-muted)",
-                          marginBottom: 4,
-                        }}
-                      >
-                        <strong style={{ color: "var(--color-text-dim)" }}>
+                      <p className="text-[13px] text-[var(--color-text-muted)] mb-1">
+                        <strong className="text-[var(--color-text-dim)]">
                           Subject:
                         </strong>{" "}
                         {log.subject}
                       </p>
                     )}
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 14,
-                        fontSize: 12,
-                        color: "var(--color-text-dim)",
-                        flexWrap: "wrap",
-                      }}
-                    >
+                    <div className="flex gap-[14px] text-xs text-[var(--color-text-dim)] flex-wrap">
                       {log.recruiter && (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
+                        <span className="flex items-center gap-1">
                           <Building2 size={11} /> {log.recruiter.company}
                         </span>
                       )}
                       {log.template && (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
+                        <span className="flex items-center gap-1">
                           <FileText size={11} /> {log.template.name}
                         </span>
                       )}
                       {log.smtpAccount && (
-                        <span
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <Mail size={11} /> {log.smtpAccount.email}
+                        <span className="flex items-center gap-1">
+                          <Mail size={11} /> {log.smtpAccount.label}
                         </span>
                       )}
                     </div>
                   </div>
-                  <div style={{ flexShrink: 0, textAlign: "right" }}>
-                    <p
-                      style={{ fontSize: 12, color: "var(--color-text-muted)" }}
-                    >
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs text-[var(--color-text-muted)]">
                       {formatDistanceToNow(new Date(log.sentAt), {
                         addSuffix: true,
                       })}
                     </p>
-                    <p
-                      style={{
-                        fontSize: 11,
-                        color: "var(--color-text-dim)",
-                        marginTop: 2,
-                      }}
-                    >
+                    <p className="text-[11px] text-[var(--color-text-dim)] mt-0.5">
                       {format(new Date(log.sentAt), "MMM d, h:mm a")}
                     </p>
                     {log.openedAt && (
-                      <p
-                        style={{
-                          fontSize: 11,
-                          color: "var(--color-success)",
-                          marginTop: 2,
-                        }}
-                      >
+                      <p className="text-[11px] text-[var(--color-success)] mt-0.5">
                         ✓ Opened
                       </p>
                     )}
                     {log.repliedAt && (
-                      <p
-                        style={{ fontSize: 11, color: "#a78bfa", marginTop: 1 }}
-                      >
+                      <p className="text-[11px] text-[#a78bfa] mt-0.5">
                         ↩ Replied
                       </p>
                     )}
@@ -234,6 +130,57 @@ export default async function HistoryPage() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function HistorySkeleton() {
+  return (
+    <div className="flex flex-col">
+      {[...Array(4)].map((_, idx) => (
+        <div key={idx} className="flex gap-4 relative">
+          {idx < 3 && (
+            <div className="absolute left-[19px] top-10 bottom-0 w-[1px] bg-[var(--color-border)]" />
+          )}
+
+          <div className="shrink-0 w-10 flex flex-col items-center pt-[14px]">
+            <Skeleton className="w-7 h-7 rounded-full" />
+          </div>
+
+          <div className="glass flex-1 px-[18px] py-[14px] mb-2.5 mt-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-64" />
+                <div className="flex gap-[14px] mt-1">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+              <div className="shrink-0 flex flex-col items-end gap-1">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <div>
+      <div className="flex items-center justify-end gap-4 mb-5"></div>
+
+      <Suspense fallback={<HistorySkeleton />}>
+        <HistoryList />
+      </Suspense>
     </div>
   );
 }

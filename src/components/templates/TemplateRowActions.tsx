@@ -29,8 +29,8 @@ export function TemplateRowActions({ id, name }: { id: string; name: string }) {
         await deleteTemplate(id);
         toast("success", `Template "${name}" deleted`);
         router.refresh();
-      } catch (err: any) {
-        toast("error", "Error deleting template", err.message);
+      } catch (err) {
+        toast("error", "Error deleting template", (err instanceof Error ? err.message : String(err)));
       }
     });
   };

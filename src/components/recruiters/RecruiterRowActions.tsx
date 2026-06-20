@@ -26,8 +26,8 @@ export function RecruiterRowActions({ id }: { id: string }) {
       try {
         await deleteRecruiter(id);
         toast("success", "Recruiter deleted");
-      } catch (err: any) {
-        toast("error", "Failed to delete recruiter", err.message);
+      } catch (err) {
+        toast("error", "Failed to delete recruiter", (err instanceof Error ? err.message : String(err)));
       }
     });
   };

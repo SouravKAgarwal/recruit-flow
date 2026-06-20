@@ -1,8 +1,3 @@
-"use client";
-
-import * as React from "react";
-import { usePathname } from "next/navigation";
-
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import {
@@ -14,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { requireAuth } from "@/lib/session";
 import {
   LayoutDashboard,
   Users,
@@ -25,63 +21,81 @@ import {
   Hexagon,
 } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function NavUserSkeleton() {
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton size="lg">
+          <Skeleton className="h-8 w-8 rounded-lg" />
+          <div className="grid flex-1 gap-1 text-left text-sm leading-tight">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <Skeleton className="ml-auto size-4" />
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
+async function DynamicNavUser() {
+  const session = await requireAuth();
+
+  const user = {
+    name: session.name,
+    email: session.email,
+    avatar: session.image,
+  };
+
+  return <NavUser user={user} />;
+}
 
 export function AppSidebar({
-  user,
   ...props
-}: React.ComponentProps<typeof Sidebar> & {
-  user: any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
-}) {
-  const pathname = usePathname();
-
+}: React.ComponentProps<typeof Sidebar> & {}) {
   const navMain = [
     {
       title: "Dashboard",
       url: "/",
       icon: <LayoutDashboard />,
-      isActive: pathname === "/",
     },
     {
       title: "Recruiters",
       url: "/recruiters",
       icon: <Users />,
-      isActive: pathname.startsWith("/recruiters"),
     },
     {
       title: "Templates",
       url: "/templates",
       icon: <FileText />,
-      isActive: pathname.startsWith("/templates"),
     },
     {
       title: "Campaigns",
       url: "/campaigns",
       icon: <Send />,
-      isActive: pathname.startsWith("/campaigns"),
     },
     {
       title: "Resumes",
       url: "/resumes",
       icon: <FileText />,
-      isActive: pathname.startsWith("/resumes"),
     },
     {
       title: "Email History",
       url: "/history",
       icon: <Mail />,
-      isActive: pathname.startsWith("/history"),
     },
     {
       title: "CRM Pipeline",
       url: "/crm",
       icon: <KanbanSquare />,
-      isActive: pathname.startsWith("/crm"),
     },
     {
       title: "SMTP Settings",
       url: "/smtp",
       icon: <Settings />,
-      isActive: pathname.startsWith("/smtp"),
     },
   ];
 
@@ -91,11 +105,8 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/" />}>
-              <Hexagon
-                className="size-5!"
-                style={{ color: "var(--color-primary)" }}
-              />
-              <span className="text-base font-semibold">RecruitFlow AI</span>
+              <Hexagon className="size-5!" />
+              <span className="text-base font-semibold">RecruitsFlow</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -104,7 +115,9 @@ export function AppSidebar({
         <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <Suspense fallback={<NavUserSkeleton />}>
+          <DynamicNavUser />
+        </Suspense>
       </SidebarFooter>
     </Sidebar>
   );

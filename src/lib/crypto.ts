@@ -21,7 +21,7 @@ export function encryptData(text: string): string {
   const publicKey = getPublicKey();
 
   // 1. Generate a random AES key
-  const aesKey = crypto.randomBytes(32); // 256 bit
+  const aesKey = crypto.randomBytes(32);
   const iv = crypto.randomBytes(12);
 
   // 2. Encrypt the data with AES-GCM

@@ -17,7 +17,7 @@ export function AddSmtpButton() {
   return (
     <>
       <Button onClick={() => setShowAdd(true)}>
-        <Plus size={16} className="mr-2" />
+        <Plus size={16} />
         <span className="hidden sm:inline">Add Account</span>
       </Button>
 

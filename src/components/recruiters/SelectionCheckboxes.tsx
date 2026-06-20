@@ -15,16 +15,3 @@ export function SelectRowCheckbox({ id }: { id: string }) {
     </div>
   );
 }
-
-export function SelectAllCheckbox({ allIds }: { allIds: string[] }) {
-  const { selectedIds, toggleAll, isPending } = useSelection();
-  return (
-    <div className="flex items-center justify-center">
-      <Checkbox
-        checked={selectedIds.size === allIds.length && allIds.length > 0}
-        onCheckedChange={() => toggleAll(allIds)}
-        disabled={isPending}
-      />
-    </div>
-  );
-}

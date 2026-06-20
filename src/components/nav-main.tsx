@@ -8,6 +8,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { usePathname } from "next/navigation"
 
 export function NavMain({
   items,
@@ -16,21 +17,25 @@ export function NavMain({
     title: string
     url: string
     icon?: React.ReactNode
-    isActive?: boolean
   }[]
 }) {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => (
+          {items.map((item) => {
+            const isActive = item.url === "/" ? pathname === "/" : pathname.startsWith(item.url);
+            
+            return(
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title} isActive={item.isActive} render={<Link href={item.url} />}>
+              <SidebarMenuButton tooltip={item.title} isActive={isActive} render={<Link href={item.url} />}>
                   {item.icon}
                   <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ))}
+          )})}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

@@ -49,8 +49,8 @@ export function SelectionProvider({ children }: { children: ReactNode }) {
         await bulkDeleteRecruiters(ids);
         toast("success", `${ids.length} recruiters deleted`);
         clearSelection();
-      } catch (err: any) {
-        toast("error", "Failed to delete recruiters", err.message);
+      } catch (err) {
+        toast("error", "Failed to delete recruiters", (err instanceof Error ? err.message : String(err)));
       }
     });
   };

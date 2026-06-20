@@ -1,11 +1,7 @@
-"use client"
-import { useState } from "react"
+"use client";
+import { useState } from "react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,38 +9,60 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { EllipsisVerticalIcon, CircleUserRoundIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
-import { logout } from "@/app/actions/auth"
-import { UserModal } from "@/components/layout/UserModal"
+} from "@/components/ui/sidebar";
+import {
+  EllipsisVerticalIcon,
+  CircleUserRoundIcon,
+  CreditCardIcon,
+  BellIcon,
+  LogOutIcon,
+} from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { UserModal } from "@/components/layout/UserModal";
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar?: string;
+  };
 }) {
-  const { isMobile } = useSidebar()
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const { isMobile } = useSidebar();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/login";
+        },
+      },
+    });
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                <Avatar className="size-8 rounded-lg grayscale">
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
+                <Avatar className="size-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name?.charAt(0) || "U"}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user.name?.charAt(0) || "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -57,7 +75,7 @@ export function NavUser({
             }
           />
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-[--radix-dropdown-menu-trigger-width] z-99999999 min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -66,7 +84,9 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="size-8">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name?.charAt(0) || "U"}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user.name?.charAt(0) || "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -78,7 +98,10 @@ export function NavUser({
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setIsModalOpen(true)} style={{ cursor: "pointer" }}>
+              <DropdownMenuItem
+                onClick={() => setIsModalOpen(true)}
+                style={{ cursor: "pointer" }}
+              >
                 <CircleUserRoundIcon />
                 Account
               </DropdownMenuItem>
@@ -92,14 +115,21 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={async () => await logout()} style={{ cursor: 'pointer' }}>
+            <DropdownMenuItem
+              onClick={handleLogout}
+              style={{ cursor: "pointer" }}
+            >
               <LogOutIcon />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
-      <UserModal open={isModalOpen} onClose={() => setIsModalOpen(false)} user={user} />
+      <UserModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        user={user}
+      />
     </SidebarMenu>
-  )
+  );
 }

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
 } from "@/app/actions/templates";
-
 import { useToast } from "@/components/ui/Toast";
 import { GmailPreview } from "./GmailPreview";
 import {
@@ -51,18 +50,6 @@ export function TemplateEditor({
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (initialTemplate) {
-      setName(initialTemplate.name);
-      setSubject(initialTemplate.subject);
-      setBody(initialTemplate.body);
-    } else {
-      setName("New Template");
-      setSubject("");
-      setBody("");
-    }
-  }, [initialTemplate]);
-
   const handleSave = () => {
     startTransition(async () => {
       try {
@@ -78,8 +65,12 @@ export function TemplateEditor({
           toast("success", "Template created");
           router.push(`/templates?id=${tpl.id}`);
         }
-      } catch (err: any) {
-        toast("error", "Error saving template", err.message);
+      } catch (err) {
+        toast(
+          "error",
+          "Error saving template",
+          err instanceof Error ? err.message : String(err),
+        );
       }
     });
   };
@@ -91,8 +82,12 @@ export function TemplateEditor({
         await deleteTemplate(initialTemplate.id);
         toast("success", "Template deleted");
         router.push("/templates");
-      } catch (err: any) {
-        toast("error", "Error deleting template", err.message);
+      } catch (err) {
+        toast(
+          "error",
+          "Error deleting template",
+          err instanceof Error ? err.message : String(err),
+        );
       }
     });
   };

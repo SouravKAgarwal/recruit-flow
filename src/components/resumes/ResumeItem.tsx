@@ -82,8 +82,8 @@ export function ResumeItem({ resume: r }: { resume: Resume }) {
       a.href = url;
       a.download = res.filename;
       a.click();
-    } catch (err: any) {
-      toast("error", "Download failed", err.message);
+    } catch (err) {
+      toast("error", "Download failed", (err instanceof Error ? err.message : String(err)));
     }
   };
 

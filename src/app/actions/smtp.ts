@@ -4,10 +4,16 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import nodemailer from "nodemailer";
+import { z } from "zod";
+import { rateLimit, enforceRateLimit } from "@/lib/rate-limit";
+import type { SmtpAccount } from "@prisma/client";
 
-
-
-export async function getSmtpAccounts() {
+/**
+ * Fetches all SMTP accounts for the currently authenticated user.
+ *
+ * @returns An array of SMTP accounts sorted by creation date.
+ */
+export async function getSmtpAccounts(): Promise<SmtpAccount[]> {
   const { userId } = await requireAuth();
   return prisma.smtpAccount.findMany({
     where: { userId },
@@ -15,13 +21,13 @@ export async function getSmtpAccounts() {
   });
 }
 
-import { z } from "zod";
-
-export type SmtpActionState = {
-  success?: boolean;
-  error?: string;
-  errors?: Record<string, string[]>;
-} | undefined;
+export type SmtpActionState =
+  | {
+      success?: boolean;
+      error?: string;
+      errors?: Record<string, string[]>;
+    }
+  | undefined;
 
 const smtpSchema = z.object({
   label: z.string().min(1, "Label is required"),
@@ -34,7 +40,24 @@ const smtpSchema = z.object({
   tls: z.preprocess((val) => val === "true" || val === true, z.boolean()),
 });
 
-export async function addSmtpAccount(prevState: SmtpActionState, formData: FormData): Promise<SmtpActionState> {
+/**
+ * Creates a new SMTP account.
+ * Rate limited to prevent abuse.
+ *
+ * @param prevState - Previous form state
+ * @param formData - SMTP account details payload
+ * @returns Success or error details
+ */
+export async function addSmtpAccount(
+  prevState: SmtpActionState,
+  formData: FormData,
+): Promise<SmtpActionState> {
+  try {
+    await enforceRateLimit("add_smtp");
+  } catch (err: any) {
+    return { error: err.message };
+  }
+
   const { userId } = await requireAuth();
 
   const parsed = smtpSchema.safeParse(Object.fromEntries(formData));
@@ -42,7 +65,8 @@ export async function addSmtpAccount(prevState: SmtpActionState, formData: FormD
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { label, senderName, email, host, port, username, password, tls } = parsed.data;
+  const { label, senderName, email, host, port, username, password, tls } =
+    parsed.data;
 
   if (!password) {
     return { errors: { password: ["Password is required for a new account"] } };
@@ -70,7 +94,24 @@ export async function addSmtpAccount(prevState: SmtpActionState, formData: FormD
   }
 }
 
-export async function updateSmtpAccount(id: string, prevState: SmtpActionState, formData: FormData): Promise<SmtpActionState> {
+/**
+ * Updates an existing SMTP account.
+ *
+ * @param id - The SMTP account ID to update
+ * @param prevState - Previous form state
+ * @param formData - Updated SMTP account details
+ * @returns Success or error details
+ */
+export async function updateSmtpAccount(
+  id: string,
+  prevState: SmtpActionState,
+  formData: FormData,
+): Promise<SmtpActionState> {
+  try {
+    await enforceRateLimit("update_smtp");
+  } catch (err: any) {
+    return { error: err.message };
+  }
   const { userId } = await requireAuth();
 
   const parsed = smtpSchema.safeParse(Object.fromEntries(formData));
@@ -78,10 +119,13 @@ export async function updateSmtpAccount(id: string, prevState: SmtpActionState, 
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { label, senderName, email, host, port, username, password, tls } = parsed.data;
+  const { label, senderName, email, host, port, username, password, tls } =
+    parsed.data;
 
   try {
-    const account = await prisma.smtpAccount.findFirst({ where: { id, userId } });
+    const account = await prisma.smtpAccount.findFirst({
+      where: { id, userId },
+    });
     if (!account) return { error: "Account not found." };
 
     await prisma.smtpAccount.update({
@@ -105,20 +149,43 @@ export async function updateSmtpAccount(id: string, prevState: SmtpActionState, 
   }
 }
 
+/**
+ * Deletes an SMTP account by ID.
+ *
+ * @param id - The SMTP account ID to delete
+ */
 export async function deleteSmtpAccount(id: string) {
+  await enforceRateLimit("delete_smtp");
   const { userId } = await requireAuth();
   await prisma.smtpAccount.deleteMany({ where: { id, userId } });
   revalidatePath("/smtp");
 }
 
 export async function setDefaultSmtp(id: string) {
+  await enforceRateLimit("set_default_smtp");
   const { userId } = await requireAuth();
-  await prisma.smtpAccount.updateMany({ where: { userId }, data: { isDefault: false } });
+  await prisma.smtpAccount.updateMany({
+    where: { userId },
+    data: { isDefault: false },
+  });
   await prisma.smtpAccount.update({ where: { id }, data: { isDefault: true } });
   revalidatePath("/smtp");
 }
 
+/**
+ * Tests an SMTP connection by attempting to verify the transport.
+ * Rate limited to prevent SMTP relay scanning or abuse.
+ *
+ * @param id - The SMTP account ID to test
+ * @returns Verification result
+ */
 export async function testSmtpConnection(id: string) {
+  try {
+    await enforceRateLimit("test_smtp");
+  } catch (err: any) {
+    return { error: err.message };
+  }
+
   const { userId } = await requireAuth();
   const account = await prisma.smtpAccount.findFirst({ where: { id, userId } });
   if (!account) return { error: "Account not found." };

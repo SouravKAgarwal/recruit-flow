@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   title: { default: "RecruitFlow AI", template: "%s · RecruitFlow AI" },
   description:
     "Premium cold email platform for job seekers and recruiters. Send smarter, track better, hire faster.",
+  applicationName: "RecruitFlow",
+  authors: [{ name: "Sourav Agarwal" }],
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

@@ -1,7 +1,16 @@
 import { formatDistanceToNow } from "date-fns";
-import { SortableHeader } from "@/components/ui/SortableHeader";
 import { CampaignRowActions } from "./CampaignRowActions";
-import { Mail, FileText, Clock, Loader2, CheckCircle, XCircle } from "lucide-react";
+import {
+  Mail,
+  FileText,
+  Clock,
+  Loader2,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import { getCampaigns } from "@/app/actions/campaigns";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Campaign = {
   id: string;
@@ -14,6 +23,134 @@ type Campaign = {
   smtpAccount: { label: string; email: string } | null;
   template: { name: string } | null;
 };
+
+import { CampaignRefresher } from "./CampaignRefresher";
+
+async function DynamicCampaignData() {
+  const campaigns: Campaign[] = await getCampaigns();
+  const hasRunningCampaigns = campaigns.some((c) => c.status === "RUNNING");
+
+  return (
+    <tbody>
+      <CampaignRefresher hasRunningCampaigns={hasRunningCampaigns} />
+      {campaigns.length === 0 && (
+        <tr>
+          <td colSpan={5} className="text-center p-12 text-muted">
+            No campaigns found.
+          </td>
+        </tr>
+      )}
+      {campaigns.map((c) => {
+        const meta = STATUS_META[c.status] ?? STATUS_META.DRAFT;
+        return (
+          <tr key={c.id}>
+            <td>
+              <div>
+                <div className="font-semibold text-sm">{c.name}</div>
+                <div className="text-text-dim text-xs mt-1">
+                  Started{" "}
+                  {formatDistanceToNow(new Date(c.createdAt), {
+                    addSuffix: true,
+                  })}
+                </div>
+              </div>
+            </td>
+            <td>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase">
+                {meta.icon} {meta.label}
+              </span>
+            </td>
+            <td>
+              <div className="flex flex-col gap-1">
+                {c.smtpAccount && (
+                  <span className="flex items-center gap-1.5">
+                    <Mail size={13} /> {c.smtpAccount.label}
+                  </span>
+                )}
+                {c.template && (
+                  <span className="flex items-center gap-1.5">
+                    <FileText size={13} /> {c.template.name}
+                  </span>
+                )}
+              </div>
+            </td>
+            <td>
+              {c.totalEmails === 0 ? (
+                <span style={{ color: "var(--color-text-dim)" }}>—</span>
+              ) : (
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--color-text-muted)",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Sent
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--color-text)",
+                      }}
+                    >
+                      {c.sentEmails}
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--color-text-muted)",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Failed
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--color-text)",
+                      }}
+                    >
+                      {c.failedEmails}
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--color-text-muted)",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Total
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--color-text)",
+                      }}
+                    >
+                      {c.totalEmails}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </td>
+            <td>
+              <CampaignRowActions id={c.id} status={c.status} />
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  );
+}
 
 const STATUS_META: Record<
   string,
@@ -45,180 +182,69 @@ const STATUS_META: Record<
   },
 };
 
-export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
+export function CampaignsTable() {
   return (
-    <div className="glass" style={{ overflow: "auto" }}>
+    <div className="glass overflow-auto">
       <table className="data-table">
         <thead>
           <tr>
-            <th>
-              <SortableHeader sortKey="name">Campaign</SortableHeader>
-            </th>
-            <th>
-              <SortableHeader sortKey="status">Status</SortableHeader>
-            </th>
+            <th>Campaign</th>
+            <th>Status</th>
             <th>Account & Template</th>
             <th>Metrics</th>
-            <th style={{ textAlign: "right" }}>Action</th>
+            <th className="text-right">Action</th>
           </tr>
         </thead>
-        <tbody>
-          {campaigns.length === 0 && (
-            <tr>
-              <td
-                colSpan={5}
-                style={{
-                  textAlign: "center",
-                  padding: 48,
-                  color: "var(--color-text-muted)",
-                }}
-              >
-                No campaigns found.
-              </td>
-            </tr>
-          )}
-          {campaigns.map((c) => {
-            const meta = STATUS_META[c.status] ?? STATUS_META.DRAFT;
-            return (
-              <tr key={c.id}>
-                <td>
-                  <div>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        color: "var(--color-text)",
-                        fontSize: 14,
-                      }}
-                    >
-                      {c.name}
-                    </div>
-                    <div
-                      style={{
-                        color: "var(--color-text-dim)",
-                        fontSize: 12,
-                        marginTop: 4,
-                      }}
-                    >
-                      Started{" "}
-                      {formatDistanceToNow(new Date(c.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: "var(--color-text)",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
-                    {meta.icon} {meta.label}
-                  </span>
-                </td>
-                <td>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 4,
-                      color: "var(--color-text-muted)",
-                    }}
-                  >
-                    {c.smtpAccount && (
-                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Mail size={13} /> {c.smtpAccount.label}
-                      </span>
-                    )}
-                    {c.template && (
-                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <FileText size={13} /> {c.template.name}
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td>
-                  {c.totalEmails === 0 ? (
-                    <span style={{ color: "var(--color-text-dim)" }}>—</span>
-                  ) : (
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "var(--color-text-muted)",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          Sent
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: "var(--color-text)",
-                          }}
-                        >
-                          {c.sentEmails}
-                        </div>
-                      </div>
-                      <div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "var(--color-text-muted)",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          Failed
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: "var(--color-text)",
-                          }}
-                        >
-                          {c.failedEmails}
-                        </div>
-                      </div>
-                      <div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "var(--color-text-muted)",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          Total
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 600,
-                            color: "var(--color-text)",
-                          }}
-                        >
-                          {c.totalEmails}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </td>
-                <td>
-                  <CampaignRowActions id={c.id} status={c.status} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
+
+        <Suspense fallback={<TableSkeleton />}>
+          <DynamicCampaignData />
+        </Suspense>
       </table>
     </div>
+  );
+}
+
+function TableSkeleton() {
+  return (
+    <tbody>
+      {[...Array(5)].map((_, i) => (
+        <tr key={i}>
+          <td>
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </td>
+          <td>
+            <Skeleton className="h-5 w-20 rounded-md" />
+          </td>
+          <td>
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-36" />
+            </div>
+          </td>
+          <td>
+            <div className="flex gap-3">
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-3 w-8" />
+                <Skeleton className="h-4 w-6" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-3 w-10" />
+                <Skeleton className="h-4 w-6" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-3 w-10" />
+                <Skeleton className="h-4 w-6" />
+              </div>
+            </div>
+          </td>
+          <td className="text-right">
+            <Skeleton className="h-8 w-8 ml-auto rounded-md" />
+          </td>
+        </tr>
+      ))}
+    </tbody>
   );
 }

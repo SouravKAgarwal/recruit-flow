@@ -1,27 +1,13 @@
+import { getResumes } from "@/app/actions/resumes";
 import { ResumeItem } from "./ResumeItem";
 
-interface Resume {
-  id: string;
-  originalName: string;
-  filename: string;
-  size: number;
-  isActive: boolean;
-  createdAt: Date;
-}
+export async function ResumeList() {
+  const resumes = await getResumes();
 
-export function ResumeList({ resumes }: { resumes: Resume[] }) {
   return (
     <div>
-      {/* Resume list */}
       {resumes.length === 0 && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "24px 0",
-            color: "var(--color-text-muted)",
-            fontSize: 13.5,
-          }}
-        >
+        <div className="text-center px-6 text-muted text-sm">
           No resumes yet. Upload your first one above.
         </div>
       )}

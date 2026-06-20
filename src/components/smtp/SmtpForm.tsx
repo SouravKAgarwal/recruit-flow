@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import type { SmtpAccount } from "@prisma/client";
 
 const PROVIDER_PRESETS = [
   { name: "Gmail", host: "smtp.gmail.com", port: 587, tls: true },
@@ -20,7 +21,7 @@ export function SmtpForm({
   submitLabel,
   onSuccess,
 }: {
-  initial?: Partial<any>;
+  initial?:SmtpAccount;
   actionFn: (
     prevState: SmtpActionState,
     formData: FormData,

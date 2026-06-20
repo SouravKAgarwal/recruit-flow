@@ -82,8 +82,7 @@ export async function runModernCampaign(campaignId: string) {
       where: { userId: campaign.userId, isActive: true },
     });
 
-    const attachments: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[] =
-      [];
+    const attachments = [];
     let attachedResumeId: string | null = null;
 
     if (activeResume) {
@@ -100,7 +99,7 @@ export async function runModernCampaign(campaignId: string) {
           path: resumePath,
         });
         attachedResumeId = activeResume.id;
-      } catch (err) {
+      } catch {
         console.error(`Resume file not found at ${resumePath}`);
       }
     }
@@ -109,7 +108,6 @@ export async function runModernCampaign(campaignId: string) {
     let failed = 0;
 
     for (const recruiter of recruiters) {
-      // Check cancellation state
       const currentState = await realPrisma.campaign.findUnique({
         where: { id: campaignId },
       });
@@ -129,7 +127,6 @@ export async function runModernCampaign(campaignId: string) {
         continue;
       }
 
-      // We support both {{name}} and {name} formats by supplying both
       const vars: Record<string, string> = {
         "{name}": recruiter.name,
         "{company}": recruiter.company,
@@ -181,7 +178,7 @@ export async function runModernCampaign(campaignId: string) {
           where: { id: smtp.id },
           data: { emailsSent: { increment: 1 }, lastUsedAt: new Date() },
         });
-      } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+      } catch (err) {
         failed++;
         await realPrisma.campaign.update({
           where: { id: campaignId },
@@ -199,7 +196,7 @@ export async function runModernCampaign(campaignId: string) {
             toEmail: recruiter.email,
             subject: subject,
             status: "FAILED",
-            errorMessage: err.message || "SMTP error",
+            errorMessage: err instanceof Error ? err.message : String(err),
           },
         });
       }
@@ -216,7 +213,7 @@ export async function runModernCampaign(campaignId: string) {
         data: { status: "COMPLETED", completedAt: new Date() },
       });
     }
-  } catch (error: any /* eslint-disable-line @typescript-eslint/no-explicit-any */ /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+  } catch (error) {
     console.error(`Error executing campaign ${campaignId}:`, error);
     try {
       await realPrisma.campaign.update({

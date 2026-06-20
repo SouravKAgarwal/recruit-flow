@@ -32,8 +32,8 @@ export function StatusSelect({ id, status: initial }: { id: string; status: stri
     startTransition(async () => {
       try {
         await updateRecruiter(id, { status: val });
-      } catch (err: any) {
-        toast("error", "Failed to update status", err.message);
+      } catch (err) {
+        toast("error", "Failed to update status", (err instanceof Error ? err.message : String(err)));
       }
     });
   };

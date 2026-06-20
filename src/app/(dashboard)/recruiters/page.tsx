@@ -1,54 +1,37 @@
-import { getRecruiters } from "@/app/actions/recruiters";
 import { RecruitersDataTable } from "@/components/recruiters/RecruitersDataTable";
 import { RecruitersActionBar } from "@/components/recruiters/RecruitersActionBar";
-import { SearchInput } from "@/components/ui/SearchInput";
 import { SelectionProvider } from "@/components/recruiters/SelectionContext";
+import { Suspense } from "react";
+import { getRecruiters } from "@/app/actions/recruiters";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata = { title: "Recruiters" };
 
-export default async function RecruitersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string; sort?: string }>;
-}) {
-  const { q, sort } = await searchParams;
-  let recruiters = await getRecruiters();
+async function ActionBar() {
+  const recruiters = await getRecruiters();
+  return <RecruitersActionBar recruiters={recruiters} />;
+}
 
-  // Apply search filtering
-  if (q) {
-    const query = q.toLowerCase();
-    recruiters = recruiters.filter(
-      (r) =>
-        r.name?.toLowerCase().includes(query) ||
-        r.company?.toLowerCase().includes(query) ||
-        r.role?.toLowerCase().includes(query) ||
-        r.email?.toLowerCase().includes(query) ||
-        r.location?.toLowerCase().includes(query)
-    );
-  }
+function ActionBarSkeleton() {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Skeleton className="h-8 w-25 rounded-md animate-pulse" />
+      <Skeleton className="h-8 w-25 rounded-md animate-pulse" />
+      <Skeleton className="h-8 w-25 rounded-md animate-pulse" />
+    </div>
+  );
+}
 
-  // Apply sorting
-  if (sort) {
-    const [key, direction] = sort.split(":");
-    recruiters.sort((a: any, b: any) => {
-      const valA = a[key] ?? "";
-      const valB = b[key] ?? "";
-      if (valA < valB) return direction === "asc" ? -1 : 1;
-      if (valA > valB) return direction === "asc" ? 1 : -1;
-      return 0;
-    });
-  }
-
+export default function RecruitersPage() {
   return (
     <SelectionProvider>
-      <div className="flex items-center justify-between gap-4 mb-5">
-        <div className="flex-1">
-          <SearchInput placeholder="Search recruiters…" />
-        </div>
-        <RecruitersActionBar recruiters={recruiters} />
+      <div className="flex items-center justify-end gap-4 mb-5">
+        <Suspense fallback={<ActionBarSkeleton />}>
+          <ActionBar />
+        </Suspense>
       </div>
 
-      <RecruitersDataTable recruiters={recruiters} />
+      <RecruitersDataTable />
     </SelectionProvider>
   );
 }

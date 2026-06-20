@@ -3,7 +3,22 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
+import { z } from "zod";
+import { runModernCampaign } from "@/lib/mailer";
+import { rateLimit, enforceRateLimit } from "@/lib/rate-limit";
+import type { SmtpAccount, Prisma } from "@prisma/client";
 
+export type EmailHistoryResult = Prisma.EmailLogGetPayload<{
+  include: { recruiter: true; template: true; resume: true };
+}> & {
+  smtpAccount: SmtpAccount | null;
+};
+
+/**
+ * Fetches all campaigns for the currently authenticated user.
+ *
+ * @returns List of campaigns ordered by creation date descending.
+ */
 export async function getCampaigns() {
   const { userId } = await requireAuth();
   return prisma.campaign.findMany({
@@ -13,39 +28,48 @@ export async function getCampaigns() {
   });
 }
 
-import { z } from "zod";
-
-export type CampaignActionState = {
-  success?: boolean;
-  error?: string;
-  errors?: Record<string, string[]>;
-} | undefined;
+export type CampaignActionState =
+  | {
+      success?: boolean;
+      error?: string;
+      errors?: Record<string, string[]>;
+    }
+  | undefined;
 
 const campaignSchema = z.object({
   name: z.string().min(1, "Campaign name is required"),
   smtpAccountId: z.string().min(1, "SMTP Account is required"),
   templateId: z.string().min(1, "Template is required"),
-  delayMs: z.coerce.number().min(500, "Delay must be at least 500ms"),
 });
 
-export async function createCampaign(prevState: CampaignActionState, formData: FormData): Promise<CampaignActionState> {
-  const { userId } = await requireAuth();
+/**
+ * Creates a new email campaign.
+ *
+ * @param prevState - Previous form state
+ * @param formData - Campaign details including name, smtp account, and template
+ * @returns Success or error details
+ */
+export async function createCampaign(
+  prevState: CampaignActionState,
+  formData: FormData,
+): Promise<CampaignActionState> {
+  try {
+    await enforceRateLimit("create_campaign");
+    const { userId } = await requireAuth();
 
   const parsed = campaignSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, smtpAccountId, templateId, delayMs } = parsed.data;
+  const { name, smtpAccountId, templateId } = parsed.data;
 
-  try {
     await prisma.campaign.create({
       data: {
         userId,
         name,
         smtpAccountId,
         templateId,
-        delayMs,
       },
     });
 
@@ -56,22 +80,50 @@ export async function createCampaign(prevState: CampaignActionState, formData: F
   }
 }
 
-import { runModernCampaign } from "@/lib/mailer";
-
+/**
+ * Triggers a campaign execution asynchronously.
+ * Uses rate limiting to prevent spamming campaign triggers.
+ *
+ * @param campaignId - The ID of the campaign to start
+ * @returns Execution start status
+ */
 export async function triggerCampaign(campaignId: string) {
+  try {
+    await enforceRateLimit("trigger_campaign");
+  } catch (err: any) {
+    return { error: err.message };
+  }
+
+  const { userId } = await requireAuth();
+
   if (!campaignId) {
     throw new Error("Missing campaign ID");
   }
 
-  // Start campaign execution asynchronously in the background.
-  runModernCampaign(campaignId).catch((err) => {
-    console.error(`Background campaign execution for ${campaignId} failed:`, err);
+  // Instantly update status to show UI feedback without polling
+  await prisma.campaign.update({
+    where: { id: campaignId, userId },
+    data: { status: "RUNNING" },
   });
 
+  runModernCampaign(campaignId).catch((err) => {
+    console.error(
+      `Background campaign execution for ${campaignId} failed:`,
+      err,
+    );
+  });
+
+  revalidatePath("/campaigns");
   return { success: true, message: "Campaign started successfully." };
 }
 
+/**
+ * Deletes a campaign and unlinks associated email logs.
+ *
+ * @param id - The ID of the campaign to delete
+ */
 export async function deleteCampaign(id: string) {
+  await enforceRateLimit("delete_campaign");
   const { userId } = await requireAuth();
   await prisma.emailLog.updateMany({
     where: { campaignId: id, userId },
@@ -83,9 +135,13 @@ export async function deleteCampaign(id: string) {
   revalidatePath("/campaigns");
 }
 
+/**
+ * Fetches the recent email history (logs) for the authenticated user.
+ *
+ * @returns Up to 200 recent email logs with populated relations.
+ */
 
-
-export async function getEmailHistory() {
+export async function getEmailHistory(): Promise<EmailHistoryResult[]> {
   const { userId } = await requireAuth();
   const logs = await prisma.emailLog.findMany({
     where: { userId },
@@ -94,53 +150,17 @@ export async function getEmailHistory() {
     include: { recruiter: true, template: true, resume: true },
   });
 
-  const smtpIds = [...new Set(logs.map(l => l.smtpAccountId).filter(Boolean))] as string[];
-  const smtps = await prisma.smtpAccount.findMany({
+  const smtpIds = [
+    ...new Set(logs.map((l: any) => l.smtpAccountId).filter(Boolean)),
+  ] as string[];
+  const smtps: SmtpAccount[] = await prisma.smtpAccount.findMany({
     where: { id: { in: smtpIds } },
   });
 
-  const smtpMap = Object.fromEntries(smtps.map(s => [s.id, s]));
+  const smtpMap = Object.fromEntries(smtps.map((s) => [s.id, s]));
 
-  return logs.map(log => ({
+  return logs.map((log: any) => ({
     ...log,
     smtpAccount: log.smtpAccountId ? smtpMap[log.smtpAccountId] : null,
   }));
-}
-
-export async function getAnalytics() {
-  const { userId } = await requireAuth();
-
-  const [total, opened, replied, recruiters] = await Promise.all([
-    prisma.emailLog.count({ where: { userId } }),
-    prisma.emailLog.count({ where: { userId, openedAt: { not: null } } }),
-    prisma.emailLog.count({ where: { userId, repliedAt: { not: null } } }),
-    prisma.recruiter.count({ where: { userId } }),
-  ]);
-
-  // Last 14 days activity
-  const since = new Date();
-  since.setDate(since.getDate() - 14);
-  const recentLogs = await prisma.emailLog.findMany({
-    where: { userId, sentAt: { gte: since } },
-    select: { sentAt: true },
-  });
-
-  const dailyCounts: Record<string, number> = {};
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    dailyCounts[d.toISOString().slice(0, 10)] = 0;
-  }
-  for (const log of recentLogs) {
-    const day = log.sentAt.toISOString().slice(0, 10);
-    if (day in dailyCounts) dailyCounts[day]++;
-  }
-
-  return {
-    totalSent: total,
-    openRate: total ? Math.round((opened / total) * 100) : 0,
-    replyRate: total ? Math.round((replied / total) * 100) : 0,
-    totalRecruiters: recruiters,
-    dailyActivity: Object.entries(dailyCounts).map(([date, count]) => ({ date, count })),
-  };
 }

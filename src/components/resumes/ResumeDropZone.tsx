@@ -55,14 +55,7 @@ export function ResumeDropZone() {
         onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
       />
       {uploading ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
+        <div className="flex flex-col items-center gap-2.5">
           <Loader2
             size={32}
             className="animate-spin"
@@ -79,17 +72,7 @@ export function ResumeDropZone() {
             gap: 10,
           }}
         >
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 14,
-              background: "var(--color-primary-muted)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+          <div className="w-12 h-12 rounded-2xl bg-primary-muted flex items-center justify-center">
             <Upload size={24} style={{ color: "var(--color-primary)" }} />
           </div>
           <div>

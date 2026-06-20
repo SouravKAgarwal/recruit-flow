@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 
@@ -36,7 +36,23 @@ async function TemplateContent({
 
   return (
     <div className="flex-1 min-w-0 h-full flex flex-col">
-      <TemplateEditor initialTemplate={activeTemplate} />
+      <TemplateEditor
+        key={activeTemplate?.id || "new"}
+        initialTemplate={activeTemplate}
+      />
+    </div>
+  );
+}
+
+function TemplateEditorSkeleton() {
+  return (
+    <div className="flex-1 flex flex-col gap-4 p-4">
+      <div className="flex gap-4">
+        <Skeleton className="h-10 flex-1" />
+        <Skeleton className="h-10 w-24" />
+      </div>
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="flex-1 w-full" />
     </div>
   );
 }
@@ -57,13 +73,7 @@ export default function TemplateEditorPage({
           Back to Templates
         </Link>
       </div>
-      <Suspense
-        fallback={
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        }
-      >
+      <Suspense fallback={<TemplateEditorSkeleton />}>
         <TemplateContent params={params} />
       </Suspense>
     </div>

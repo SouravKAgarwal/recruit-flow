@@ -72,8 +72,10 @@ export function CommandPalette() {
           <Input
             ref={inputRef}
             value={query}
-            onChange={(e) => { // eslint-disable-next-line react-hooks/set-state-in-effect
-      setQuery(e.target.value); setActiveIdx(0); }}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActiveIdx(0);
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Search commands…"
             className="flex-1 bg-transparent border-none outline-none shadow-none focus-visible:ring-0 text-[15px]"

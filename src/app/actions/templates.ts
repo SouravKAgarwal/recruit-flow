@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { EmailTemplate } from "@prisma/client";
 
-export async function getTemplates() {
+export async function getTemplates(): Promise<EmailTemplate[]> {
   const { userId } = await requireAuth();
   return prisma.emailTemplate.findMany({
     where: { userId },
@@ -12,7 +14,12 @@ export async function getTemplates() {
   });
 }
 
-export async function createTemplate(data: { name: string; subject: string; body: string }) {
+export async function createTemplate(data: {
+  name: string;
+  subject: string;
+  body: string;
+}) {
+  await enforceRateLimit("create_template");
   const { userId } = await requireAuth();
   const tpl = await prisma.emailTemplate.create({
     data: { userId, ...data },
@@ -21,13 +28,18 @@ export async function createTemplate(data: { name: string; subject: string; body
   return tpl;
 }
 
-export async function updateTemplate(id: string, data: { name?: string; subject?: string; body?: string }) {
+export async function updateTemplate(
+  id: string,
+  data: { name?: string; subject?: string; body?: string },
+) {
+  await enforceRateLimit("update_template");
   const { userId } = await requireAuth();
   await prisma.emailTemplate.updateMany({ where: { id, userId }, data });
   revalidatePath("/templates");
 }
 
 export async function deleteTemplate(id: string) {
+  await enforceRateLimit("delete_template");
   const { userId } = await requireAuth();
   await prisma.emailTemplate.deleteMany({ where: { id, userId } });
   revalidatePath("/templates");

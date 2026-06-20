@@ -6,10 +6,12 @@ import path from "path";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import type { Resume } from "@prisma/client";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads", "resumes");
 
-export async function getResumes() {
+export async function getResumes(): Promise<Resume[]> {
   const { userId } = await requireAuth();
   return prisma.resume.findMany({
     where: { userId },
@@ -18,11 +20,15 @@ export async function getResumes() {
 }
 
 export async function uploadResume(formData: FormData) {
+  await enforceRateLimit("upload_resume");
   const { userId } = await requireAuth();
   const file = formData.get("file") as File | null;
   if (!file) return { error: "No file provided." };
 
-  const allowed = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+  const allowed = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
   if (!allowed.includes(file.type)) {
     return { error: "Only PDF and DOCX files are supported." };
   }
@@ -50,13 +56,18 @@ export async function uploadResume(formData: FormData) {
 }
 
 export async function setActiveResume(id: string) {
+  await enforceRateLimit("set_active_resume");
   const { userId } = await requireAuth();
-  await prisma.resume.updateMany({ where: { userId }, data: { isActive: false } });
+  await prisma.resume.updateMany({
+    where: { userId },
+    data: { isActive: false },
+  });
   await prisma.resume.update({ where: { id }, data: { isActive: true } });
   revalidatePath("/resumes");
 }
 
 export async function renameResume(id: string, newName: string) {
+  await enforceRateLimit("rename_resume");
   const { userId } = await requireAuth();
   await prisma.resume.updateMany({
     where: { id, userId },
@@ -66,6 +77,7 @@ export async function renameResume(id: string, newName: string) {
 }
 
 export async function deleteResume(id: string) {
+  await enforceRateLimit("delete_resume");
   const { userId } = await requireAuth();
   const resume = await prisma.resume.findFirst({ where: { id, userId } });
   if (!resume) return;
@@ -79,12 +91,13 @@ export async function deleteResume(id: string) {
 }
 
 export async function downloadResumeAction(filename: string) {
+  await enforceRateLimit("download_resume");
   const { userId } = await requireAuth();
 
   const resume = await prisma.resume.findFirst({
     where: { filename, userId },
   });
-  
+
   if (!resume) {
     throw new Error("Resume not found");
   }
@@ -99,7 +112,7 @@ export async function downloadResumeAction(filename: string) {
       base64Data,
       mimeType: "application/pdf",
     };
-  } catch (error: any) {
+  } catch {
     throw new Error("File not found");
   }
 }

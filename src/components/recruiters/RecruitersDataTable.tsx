@@ -1,9 +1,11 @@
 import { ExternalLink } from "lucide-react";
-import { SortableHeader } from "@/components/ui/SortableHeader";
 import { EditableCell } from "./EditableCell";
 import { StatusSelect } from "./StatusSelect";
 import { RecruiterRowActions } from "./RecruiterRowActions";
-import { SelectRowCheckbox, SelectAllCheckbox } from "./SelectionCheckboxes";
+import { SelectRowCheckbox } from "./SelectionCheckboxes";
+import { getRecruiters } from "@/app/actions/recruiters";
+import { Suspense } from "react";
+import { Skeleton } from "../ui/skeleton";
 
 type Recruiter = {
   id: string;
@@ -18,103 +20,94 @@ type Recruiter = {
   lastContactedAt: Date | null;
 };
 
-export function RecruitersDataTable({ recruiters }: { recruiters: Recruiter[] }) {
-  const allIds = recruiters.map(r => r.id);
+async function DynamicRecruitersDataTable({ size }: { size?: number }) {
+  const data: Recruiter[] = await getRecruiters();
+
+  const recruiters = size ? data.slice(0, 5) : data;
 
   return (
-    <div className="glass" style={{ overflow: "auto" }}>
+    <tbody>
+      {recruiters.length === 0 && (
+        <tr>
+          <td colSpan={9} className="text-center p-12 text-muted">
+            No recruiters found.
+          </td>
+        </tr>
+      )}
+      {recruiters.map((row) => (
+        <tr key={row.id}>
+          <td> <SelectRowCheckbox id={row.id} /> </td>
+          <td> <EditableCell id={row.id} field="name" value={row.name} /></td>
+          <td><EditableCell id={row.id} field="company" value={row.company} /></td>
+          <td><EditableCell id={row.id} field="role" value={row.role} /></td>
+          <td> <EditableCell id={row.id} field="email" value={row.email} /></td>
+          <td><StatusSelect id={row.id} status={row.status} /> </td>
+          <td>
+            {row.linkedin ? (
+              <a
+                href={
+                  row.linkedin.startsWith("http")
+                    ? row.linkedin
+                    : `https://${row.linkedin}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary flex items-center gap-1 text-xs"
+              >
+                Profile <ExternalLink size={10} />
+              </a>
+            ) : (
+              <span className="text-text-dim">—</span>
+            )}
+          </td>
+          <td><EditableCell id={row.id} field="location" value={row.location} /> </td>
+          <td className="text-right"><RecruiterRowActions id={row.id} /></td>
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+
+function TableSkeleton() {
+  return (
+    <tbody>
+      {[...Array(3)].map((_, i) => (
+        <tr key={i}>
+          <td><Skeleton className="h-4 animate-pulse w-4 rounded" /></td>
+          <td><Skeleton className="h-6 animate-pulse w-20" /></td>
+          <td><Skeleton className="h-6 animate-pulse w-24" /></td>
+          <td><Skeleton className="h-6 animate-pulse w-20" /></td>
+          <td><Skeleton className="h-6 animate-pulse w-40" /></td>
+          <td><Skeleton className="h-6 animate-pulse w-20 rounded-full" /></td>
+          <td><Skeleton className="h-6 animate-pulse w-16" /></td>
+          <td><Skeleton className="h-6 animate-pulse w-24" /></td>
+          <td className="text-right"><Skeleton className="h-6 animate-pulse w-8 ml-auto rounded-md" /></td>
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+
+export function RecruitersDataTable({ size }: { size?: number }) {
+  return (
+    <div className="glass overflow-auto">
       <table className="data-table">
         <thead>
           <tr>
-            <th style={{ width: 40 }}>
-              <SelectAllCheckbox allIds={allIds} />
-            </th>
-            <th>
-              <SortableHeader sortKey="name">Name</SortableHeader>
-            </th>
-            <th>
-              <SortableHeader sortKey="company">Company</SortableHeader>
-            </th>
-            <th>
-              <SortableHeader sortKey="role">Role</SortableHeader>
-            </th>
-            <th>
-              <SortableHeader sortKey="email">Email</SortableHeader>
-            </th>
-            <th>
-              <SortableHeader sortKey="status">Status</SortableHeader>
-            </th>
+            <th className="w-10"></th>
+            <th>Name</th>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Status</th>
             <th>LinkedIn</th>
-            <th>
-              <SortableHeader sortKey="location">Location</SortableHeader>
-            </th>
-            <th style={{ width: 48, textAlign: "right" }}>Action</th>
+            <th>Location</th>
+            <th className="w-12 text-right">Action</th>
           </tr>
         </thead>
-        <tbody>
-          {recruiters.length === 0 && (
-            <tr>
-              <td
-                colSpan={9}
-                style={{
-                  textAlign: "center",
-                  padding: 48,
-                  color: "var(--color-text-muted)",
-                }}
-              >
-                No recruiters found.
-              </td>
-            </tr>
-          )}
-          {recruiters.map((row) => (
-            <tr key={row.id}>
-              <td>
-                <SelectRowCheckbox id={row.id} />
-              </td>
-              <td>
-                <EditableCell id={row.id} field="name" value={row.name} />
-              </td>
-              <td>
-                <EditableCell id={row.id} field="company" value={row.company} />
-              </td>
-              <td>
-                <EditableCell id={row.id} field="role" value={row.role} />
-              </td>
-              <td>
-                <EditableCell id={row.id} field="email" value={row.email} />
-              </td>
-              <td>
-                <StatusSelect id={row.id} status={row.status} />
-              </td>
-              <td>
-                {row.linkedin ? (
-                  <a
-                    href={row.linkedin.startsWith("http") ? row.linkedin : `https://${row.linkedin}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      color: "var(--color-primary)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      fontSize: 12,
-                    }}
-                  >
-                    Profile <ExternalLink size={10} />
-                  </a>
-                ) : (
-                  <span style={{ color: "var(--color-text-dim)" }}>—</span>
-                )}
-              </td>
-              <td>
-                <EditableCell id={row.id} field="location" value={row.location} />
-              </td>
-              <td style={{ textAlign: "right" }}>
-                <RecruiterRowActions id={row.id} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        <Suspense fallback={<TableSkeleton />}>
+          <DynamicRecruitersDataTable size={size} />
+        </Suspense>
       </table>
     </div>
   );

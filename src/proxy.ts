@@ -1,52 +1,31 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
+import { NextResponse, type NextRequest } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 
-const sessionOptions = {
-  password: process.env.SESSION_SECRET!,
-  cookieName: "rf_session",
-  cookieOptions: {
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    sameSite: "lax" as const,
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  },
-};
-
-export async function proxy(request: NextRequest) {
-  const cookieStore = await cookies();
-  const session = await getIronSession<{ userId?: string }>(
-    cookieStore,
-    sessionOptions,
-  );
-
-  const pathname = request.nextUrl.pathname;
-  const isAuthRoute =
-    pathname.startsWith("/login") || pathname.startsWith("/register");
-  const isApiRoute = pathname.startsWith("/api");
-  const isPublicRoute = isAuthRoute || isApiRoute;
-
-  if (!session.userId && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+export default async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if (
+    path.startsWith("/api") ||
+    path.startsWith("/_next") ||
+    path.startsWith("/login") ||
+    path.startsWith("/register") ||
+    path.startsWith("/forgot-password") ||
+    path.startsWith("/reset-password") ||
+    path.startsWith("/verify-email") ||
+    path.startsWith("/public") ||
+    path === "/favicon.ico"
+  ) {
+    return NextResponse.next();
   }
+  // Check for session cookie locally without hitting the API network
+  const sessionCookie = getSessionCookie(request);
 
-  if (session.userId && isAuthRoute) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (!sessionCookie) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login|register|forgot-password|reset-password|verify-email).*)"],
 };

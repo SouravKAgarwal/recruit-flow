@@ -18,17 +18,17 @@ export const encryptionExtension = {
   name: "field-encryption",
   query: {
     $allModels: {
-      async $allOperations({ model, operation, args, query }: any) {
+      async $allOperations({ model, args, query }: any) {
         const fieldsToEncrypt = ENCRYPTED_MODELS[model];
 
         // 1. Encrypt args.data if applicable
         if (fieldsToEncrypt && args.data) {
           if (Array.isArray(args.data)) {
-            args.data = args.data.map((item: any) =>
-              encryptObject(item, fieldsToEncrypt),
+            args.data = args.data.map((item: unknown) =>
+              encryptObject(item as Record<string, unknown>, fieldsToEncrypt),
             );
           } else {
-            args.data = encryptObject(args.data, fieldsToEncrypt);
+            args.data = encryptObject(args.data as Record<string, unknown>, fieldsToEncrypt);
           }
         }
 
@@ -42,16 +42,16 @@ export const encryptionExtension = {
   },
 };
 
-function deepDecrypt(obj: any, modelName: string): any {
+function deepDecrypt(obj: unknown, modelName: string): unknown {
   if (!obj || typeof obj !== "object") return obj;
   if (obj instanceof Date) return obj;
   if (Array.isArray(obj))
     return obj.map((item) => deepDecrypt(item, modelName));
 
-  let newObj = { ...obj };
+  let newObj = { ...(obj as Record<string, unknown>) };
   const fields = ENCRYPTED_MODELS[modelName];
   if (fields) {
-    newObj = decryptObject(newObj, fields);
+    newObj = decryptObject(newObj, fields) as Record<string, unknown>;
   }
 
   for (const [key, val] of Object.entries(newObj)) {
@@ -63,24 +63,24 @@ function deepDecrypt(obj: any, modelName: string): any {
   return newObj;
 }
 
-function encryptObject(obj: any, fields: string[]): any {
+function encryptObject(obj: unknown, fields: string[]): unknown {
   if (!obj || typeof obj !== "object") return obj;
-  const newObj = { ...obj };
+  const newObj = { ...(obj as Record<string, unknown>) };
   for (const field of fields) {
     if (newObj[field] !== undefined && newObj[field] !== null) {
-      newObj[field] = encryptData(newObj[field]);
+      newObj[field] = encryptData(newObj[field] as string);
     }
   }
   return newObj;
 }
 
-function decryptObject(obj: any, fields: string[]): any {
+function decryptObject(obj: unknown, fields: string[]): unknown {
   if (!obj || typeof obj !== "object") return obj;
-  const newObj = { ...obj };
+  const newObj = { ...(obj as Record<string, unknown>) };
   for (const field of fields) {
     if (newObj[field] !== undefined && newObj[field] !== null) {
       try {
-        newObj[field] = decryptData(newObj[field]);
+        newObj[field] = decryptData(newObj[field] as string);
       } catch {
         // Fallback
       }
