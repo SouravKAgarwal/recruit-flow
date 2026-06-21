@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, cacheTag, cacheLife } from "next/cache";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -13,6 +13,14 @@ const UPLOAD_DIR = path.join(process.cwd(), "uploads", "resumes");
 
 export async function getResumes(): Promise<Resume[]> {
   const { userId } = await requireAuth();
+  return getCachedResumes(userId);
+}
+
+async function getCachedResumes(userId: string): Promise<Resume[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("resumes", userId);
+
   return prisma.resume.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -52,6 +60,7 @@ export async function uploadResume(formData: FormData) {
   });
 
   revalidatePath("/resumes");
+  revalidateTag("resumes", "hours");
   return { success: true };
 }
 
@@ -64,6 +73,7 @@ export async function setActiveResume(id: string) {
   });
   await prisma.resume.update({ where: { id }, data: { isActive: true } });
   revalidatePath("/resumes");
+  revalidateTag("resumes", "hours");
 }
 
 export async function renameResume(id: string, newName: string) {
@@ -74,6 +84,7 @@ export async function renameResume(id: string, newName: string) {
     data: { originalName: newName },
   });
   revalidatePath("/resumes");
+  revalidateTag("resumes", "hours");
 }
 
 export async function deleteResume(id: string) {
@@ -88,6 +99,7 @@ export async function deleteResume(id: string) {
 
   await prisma.resume.delete({ where: { id } });
   revalidatePath("/resumes");
+  revalidateTag("resumes", "hours");
 }
 
 export async function downloadResumeAction(filename: string) {

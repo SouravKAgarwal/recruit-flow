@@ -1,5 +1,7 @@
 import { headers } from "next/headers";
 import { cache } from "react";
+import { auth } from "./auth";
+import { redirect } from "next/navigation";
 
 export interface SessionData {
   userId: string;
@@ -13,12 +15,9 @@ export interface SessionData {
  * Memoized per-request to avoid redundant DB/Redis lookups
  */
 export const getSession = cache(async () => {
-  // Move await headers() outside try-catch so Next.js can properly
-  // catch its own DynamicServerError and opt the route into dynamic rendering.
   const reqHeaders = await headers();
 
   try {
-    const { auth } = await import("./auth");
     const session = await auth.api.getSession({
       headers: reqHeaders,
     });
@@ -47,7 +46,7 @@ export const getSession = cache(async () => {
 export const requireAuth = cache(async (): Promise<SessionData> => {
   const sessionData = await getSession();
   if (!sessionData?.user?.id) {
-    throw new Error("UNAUTHORIZED");
+    redirect("/login");
   }
   return {
     userId: sessionData.user.id,

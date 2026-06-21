@@ -1,12 +1,20 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, cacheTag, cacheLife } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function getRecruiters() {
   const { userId } = await requireAuth();
+  return getCachedRecruiters(userId);
+}
+
+async function getCachedRecruiters(userId: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("recruiters", userId);
+
   return prisma.recruiter.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -33,6 +41,7 @@ export async function updateRecruiter(
   await prisma.recruiter.updateMany({ where: { id, userId }, data });
   revalidatePath("/recruiters");
   revalidatePath("/crm");
+  revalidateTag("recruiters", "hours");
 }
 
 export async function deleteRecruiter(id: string) {
@@ -40,6 +49,7 @@ export async function deleteRecruiter(id: string) {
   const { userId } = await requireAuth();
   await prisma.recruiter.deleteMany({ where: { id, userId } });
   revalidatePath("/recruiters");
+  revalidateTag("recruiters", "hours");
 }
 
 export async function bulkDeleteRecruiters(ids: string[]) {
@@ -47,6 +57,7 @@ export async function bulkDeleteRecruiters(ids: string[]) {
   const { userId } = await requireAuth();
   await prisma.recruiter.deleteMany({ where: { id: { in: ids }, userId } });
   revalidatePath("/recruiters");
+  revalidateTag("recruiters", "hours");
 }
 
 export async function importRecruiters(
@@ -82,6 +93,7 @@ export async function importRecruiters(
   });
 
   revalidatePath("/recruiters");
+  revalidateTag("recruiters", "hours");
   return { count: toInsert.length, skipped: rows.length - toInsert.length };
 }
 
@@ -93,4 +105,5 @@ export async function updateCrmStage(id: string, crmStage: string) {
     data: { crmStage },
   });
   revalidatePath("/crm");
+  revalidateTag("recruiters", "hours");
 }

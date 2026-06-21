@@ -1,19 +1,9 @@
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { PrismaClient } from "@prisma/client";
+import { PrismaPromise } from "@prisma/client";
 import { encryptionExtension } from "./crypto-extension";
 import { getSession } from "./session";
+import { basePrisma } from "./base-prisma";
 
-const connectionString = `${process.env.DATABASE_URL}`;
-
-const adapter = new PrismaNeon({ connectionString });
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
-
-export const basePrisma = globalForPrisma.prisma || new PrismaClient({ adapter });
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = basePrisma;
-
-import { Prisma } from "@prisma/client";
+export { basePrisma };
 
 const prismaWithRLS = basePrisma.$extends(encryptionExtension).$extends({
   query: {
@@ -34,7 +24,7 @@ const prismaWithRLS = basePrisma.$extends(encryptionExtension).$extends({
                 `SELECT set_config('app.current_user_id', $1, TRUE)`,
                 userId,
               ),
-              query(args) as Prisma.PrismaPromise<any>,
+              query(args) as PrismaPromise<any>,
             ],
             { maxWait: 15000, timeout: 15000 },
           );

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -20,8 +21,10 @@ import {
   EllipsisVerticalIcon,
   CircleUserRoundIcon,
   CreditCardIcon,
-  BellIcon,
   LogOutIcon,
+  Settings,
+  Activity,
+  History
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { UserModal } from "@/components/layout/UserModal";
@@ -57,23 +60,23 @@ export function NavUser({
               <SidebarMenuButton
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              >
-                <Avatar className="size-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                    {user.name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs text-sidebar-foreground/70">
-                    {user.email}
-                  </span>
-                </div>
-                <EllipsisVerticalIcon className="ml-auto size-4" />
-              </SidebarMenuButton>
+              />
             }
-          />
+          >
+            <Avatar className="size-8 rounded-lg">
+              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarFallback className="rounded-lg">
+                {user.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-medium">{user.name}</span>
+              <span className="truncate text-xs text-sidebar-foreground/70">
+                {user.email}
+              </span>
+            </div>
+            <EllipsisVerticalIcon className="ml-auto size-4" />
+          </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] z-99999999 min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
@@ -100,26 +103,37 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem
                 onClick={() => setIsModalOpen(true)}
-                style={{ cursor: "pointer" }}
+                className="cursor-pointer"
               >
-                <CircleUserRoundIcon />
-                Account
+                <CircleUserRoundIcon className="mr-2 size-4" />
+                Account Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
+              <DropdownMenuItem render={<Link href="/billing" className="w-full cursor-pointer flex items-center" />}>
+                <CreditCardIcon className="mr-2 size-4" />
+                Billing & Plan
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem render={<Link href="/crm" className="w-full cursor-pointer flex items-center" />}>
+                <Activity className="mr-2 size-4" />
+                CRM & Activity
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/history" className="w-full cursor-pointer flex items-center" />}>
+                <History className="mr-2 size-4" />
+                Email Logs
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/settings" className="w-full cursor-pointer flex items-center" />}>
+                <Settings className="mr-2 size-4" />
+                Preferences
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleLogout}
-              style={{ cursor: "pointer" }}
+              className="cursor-pointer text-red-500 focus:text-red-500"
             >
-              <LogOutIcon />
+              <LogOutIcon className="mr-2 size-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

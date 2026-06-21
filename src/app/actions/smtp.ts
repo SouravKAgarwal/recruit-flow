@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, cacheTag, cacheLife } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import nodemailer from "nodemailer";
@@ -15,6 +15,14 @@ import type { SmtpAccount } from "@prisma/client";
  */
 export async function getSmtpAccounts(): Promise<SmtpAccount[]> {
   const { userId } = await requireAuth();
+  return getCachedSmtpAccounts(userId);
+}
+
+async function getCachedSmtpAccounts(userId: string): Promise<SmtpAccount[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("smtp", userId);
+
   return prisma.smtpAccount.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
@@ -88,6 +96,7 @@ export async function addSmtpAccount(
     });
 
     revalidatePath("/smtp");
+    revalidateTag("smtp", "hours");
     return { success: true };
   } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     return { error: err.message || "Failed to create SMTP account" };
@@ -143,6 +152,7 @@ export async function updateSmtpAccount(
     });
 
     revalidatePath("/smtp");
+    revalidateTag("smtp", "hours");
     return { success: true };
   } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     return { error: err.message || "Failed to update SMTP account" };
@@ -159,6 +169,7 @@ export async function deleteSmtpAccount(id: string) {
   const { userId } = await requireAuth();
   await prisma.smtpAccount.deleteMany({ where: { id, userId } });
   revalidatePath("/smtp");
+  revalidateTag("smtp", "hours");
 }
 
 export async function setDefaultSmtp(id: string) {
@@ -170,6 +181,7 @@ export async function setDefaultSmtp(id: string) {
   });
   await prisma.smtpAccount.update({ where: { id }, data: { isDefault: true } });
   revalidatePath("/smtp");
+  revalidateTag("smtp", "hours");
 }
 
 /**

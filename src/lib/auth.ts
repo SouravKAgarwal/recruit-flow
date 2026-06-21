@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { emailOTP } from "better-auth/plugins";
-import { basePrisma } from "./prisma";
+import { basePrisma } from "./base-prisma";
 import { redis } from "./redis";
 import { nextCookies } from "better-auth/next-js";
 import nodemailer from "nodemailer";
@@ -109,6 +109,16 @@ export const auth = betterAuth({
   },
 
   // -------------------------------------------------------------------------
+  // Account Management
+  // -------------------------------------------------------------------------
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google", "github"],
+    },
+  },
+
+  // -------------------------------------------------------------------------
   // Email + password authentication
   // -------------------------------------------------------------------------
   emailAndPassword: {
@@ -157,6 +167,8 @@ export const auth = betterAuth({
         resetPasswordEmail(url),
       );
     },
+
+    revokeSessionsOnPasswordReset: true,
   },
 
   // -------------------------------------------------------------------------
@@ -258,14 +270,16 @@ export const auth = betterAuth({
   // -------------------------------------------------------------------------
   // Advanced / security settings
   // -------------------------------------------------------------------------
-  advanced: {
-    defaultCookieAttributes: {
-      /**
-       * Mark all auth cookies as Secure so they are only transmitted over
-       * HTTPS.  In local development this will break if you're on plain HTTP —
-       * set `BETTER_AUTH_DISABLE_SECURE_COOKIES=true` in your `.env.local`.
-       */
-      secure: true,
-    },
-  },
+  // advanced: {
+  //   defaultCookieAttributes: {
+  //     /**
+  //      * Mark all auth cookies as Secure so they are only transmitted over
+  //      * HTTPS.  In local development this will break if you're on plain HTTP —
+  //      * set `BETTER_AUTH_DISABLE_SECURE_COOKIES=true` in your `.env.local`.
+  //      */
+  //     secure: process.env.NODE_ENV === "production",
+  //     sameSite: "strict",
+  //     prefix: "secure",
+  //   },
+  // },
 });

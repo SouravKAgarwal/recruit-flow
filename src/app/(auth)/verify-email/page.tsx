@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { basePrisma } from "@/lib/prisma";
+import { basePrisma } from "@/lib/base-prisma";
 import { VerifyEmailForm } from "./verify-form";
 import { Suspense } from "react";
 

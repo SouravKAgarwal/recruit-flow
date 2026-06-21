@@ -12,6 +12,13 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   devIndicators: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+    optimizeCss: true,
+    inlineCss: true,
+  },
 };
 
 // const withBundleAnalyzer = require("@next/bundle-analyzer")({

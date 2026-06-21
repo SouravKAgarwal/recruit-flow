@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, cacheTag, cacheLife } from "next/cache";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { z } from "zod";
@@ -21,6 +21,14 @@ export type EmailHistoryResult = Prisma.EmailLogGetPayload<{
  */
 export async function getCampaigns() {
   const { userId } = await requireAuth();
+  return getCachedCampaigns(userId);
+}
+
+async function getCachedCampaigns(userId: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("campaigns", userId);
+
   return prisma.campaign.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -74,6 +82,7 @@ export async function createCampaign(
     });
 
     revalidatePath("/campaigns");
+    revalidateTag("campaigns", "hours");
     return { success: true };
   } catch (err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     return { error: err.message || "Failed to create campaign" };
@@ -114,6 +123,7 @@ export async function triggerCampaign(campaignId: string) {
   });
 
   revalidatePath("/campaigns");
+  revalidateTag("campaigns", "hours");
   return { success: true, message: "Campaign started successfully." };
 }
 
@@ -133,6 +143,7 @@ export async function deleteCampaign(id: string) {
     where: { id, userId },
   });
   revalidatePath("/campaigns");
+  revalidateTag("campaigns", "hours");
 }
 
 /**
@@ -143,6 +154,14 @@ export async function deleteCampaign(id: string) {
 
 export async function getEmailHistory(): Promise<EmailHistoryResult[]> {
   const { userId } = await requireAuth();
+  return getCachedEmailHistory(userId);
+}
+
+async function getCachedEmailHistory(userId: string): Promise<EmailHistoryResult[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("history", userId);
+
   const logs = await prisma.emailLog.findMany({
     where: { userId },
     orderBy: { sentAt: "desc" },

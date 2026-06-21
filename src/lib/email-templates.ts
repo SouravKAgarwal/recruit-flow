@@ -16,7 +16,7 @@ const BRAND_BG = "#09090b";    // header background
 // Base layout
 // ---------------------------------------------------------------------------
 
-export function buildEmail(title: string, content: string): string {
+function buildEmail(title: string, content: string): string {
   return `
 <!DOCTYPE html>
 <html lang="en">

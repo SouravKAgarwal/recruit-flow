@@ -104,9 +104,12 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/" />}>
+            <SidebarMenuButton
+              tooltip="RecruitsFlow"
+              render={<Link href="/" />}
+            >
               <Hexagon className="size-5!" />
-              <span className="text-base font-semibold">RecruitsFlow</span>
+              <span className="font-semibold text-base">RecruitsFlow</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
