@@ -1,10 +1,12 @@
-# RecruitsFlow
-
-![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js)
-![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+<div align="center">
+   <h1>RecruitsFlow</h1>
+   
+   ![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js)
+   ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+   ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+   ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+   ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+</div>
 
 RecruitsFlow is a modern, responsive, server-driven email outreach platform designed to streamline the management of recruiter contacts, facilitate the creation of HTML email templates, securely store sensitive credentials, and trigger automated bulk campaigns. Built with a Next.js architecture, it focuses on performance and enterprise-grade security.
 
