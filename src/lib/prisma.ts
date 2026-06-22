@@ -1,7 +1,7 @@
 import { PrismaPromise } from "@prisma/client";
-import { encryptionExtension } from "./crypto-extension";
 import { getSession } from "./session";
 import { basePrisma } from "./base-prisma";
+import { encryptionExtension } from "./crypto-extension";
 
 export { basePrisma };
 

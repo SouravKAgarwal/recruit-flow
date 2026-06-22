@@ -4,45 +4,12 @@ import { emailOTP } from "better-auth/plugins";
 import { basePrisma } from "./base-prisma";
 import { redis } from "./redis";
 import { nextCookies } from "better-auth/next-js";
-import nodemailer from "nodemailer";
 import {
+  sendMail,
   verificationEmail,
   resetPasswordEmail,
   otpEmail,
 } from "./email-templates";
-
-// ---------------------------------------------------------------------------
-// SMTP transporter
-// Singleton — created once at module load time so the connection pool is reused
-// across requests rather than being recreated on every email send.
-// ---------------------------------------------------------------------------
-
-const smtpPort = parseInt(process.env.SMTP_PORT ?? "587", 10);
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: smtpPort,
-  // Force TLS on port 465; allow STARTTLS on 587 (nodemailer default behaviour)
-  secure: process.env.SMTP_SECURE === "true" || smtpPort === 465,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    // Enforce certificate validation in production to prevent MitM attacks
-    rejectUnauthorized: process.env.NODE_ENV === "production",
-  },
-});
-
-/** Thin helper so every `sendMail` call shares the same `from` address. */
-async function sendMail(to: string, subject: string, html: string) {
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
-    to,
-    subject,
-    html,
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Better Auth instance
@@ -53,11 +20,9 @@ export const auth = betterAuth({
   appName: "RecruitsFlow",
 
   // -------------------------------------------------------------------------
-  // Database adapter — Prisma + PostgreSQL
+  // Database adapter — Prisma + PostgreSQL + Redis Custom Override
   // -------------------------------------------------------------------------
-  database: prismaAdapter(basePrisma, {
-    provider: "postgresql",
-  }),
+  database: prismaAdapter(basePrisma, { provider: "postgresql" }),
 
   // -------------------------------------------------------------------------
   // Secondary storage — Redis

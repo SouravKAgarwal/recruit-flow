@@ -26,8 +26,6 @@ export default function LoginForm() {
         return { error: error.message || "An error occurred" };
       }
 
-      await authClient.revokeOtherSessions();
-
       router.push("/");
       router.refresh();
       return { error: null };

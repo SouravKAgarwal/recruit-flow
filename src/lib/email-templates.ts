@@ -7,10 +7,44 @@
  * All templates share the same outer shell (`buildEmail`) so branding changes
  * only need to happen in one place.
  */
+import nodemailer from "nodemailer";
 
 const APP_NAME = "RecruitsFlow";
 const BRAND_COLOR = "#2563eb"; // primary blue
-const BRAND_BG = "#09090b";    // header background
+const BRAND_BG = "#09090b"; // header background
+
+// ---------------------------------------------------------------------------
+// SMTP transporter
+// Singleton — created once at module load time so the connection pool is reused
+// across requests rather than being recreated on every email send.
+// ---------------------------------------------------------------------------
+
+const smtpPort = parseInt(process.env.SMTP_PORT ?? "587", 10);
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: smtpPort,
+  // Force TLS on port 465; allow STARTTLS on 587 (nodemailer default behaviour)
+  secure: process.env.SMTP_SECURE === "true" || smtpPort === 465,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  tls: {
+    // Enforce certificate validation in production to prevent MitM attacks
+    rejectUnauthorized: process.env.NODE_ENV === "production",
+  },
+});
+
+/** Thin helper so every `sendMail` call shares the same `from` address. */
+export async function sendMail(to: string, subject: string, html: string) {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to,
+    subject,
+    html,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Base layout
@@ -219,7 +253,11 @@ export function resetPasswordEmail(url: string): string {
 // OTP (one-time password) emails
 // ---------------------------------------------------------------------------
 
-export type OtpEmailType = "email-verification" | "sign-in" | "forget-password" | "change-email";
+type OtpEmailType =
+  | "email-verification"
+  | "sign-in"
+  | "forget-password"
+  | "change-email";
 
 interface OtpEmailOptions {
   otp: string;
@@ -236,7 +274,10 @@ export function otpEmail({ otp, type }: OtpEmailOptions): {
   subject: string;
   html: string;
 } {
-  const templates: Record<OtpEmailType, { subject: string; heading: string; body: string }> = {
+  const templates: Record<
+    OtpEmailType,
+    { subject: string; heading: string; body: string }
+  > = {
     "email-verification": {
       subject: "Your email verification code",
       heading: "Verify your email",

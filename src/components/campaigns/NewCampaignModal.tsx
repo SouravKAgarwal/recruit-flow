@@ -64,7 +64,7 @@ export function NewCampaignModal({
         className="h-8 px-2 sm:px-4 rounded-md font-semibold"
         title="New Campaign"
       >
-        <Plus size={14} className="sm:mr-2" />{" "}
+        <Plus size={14} className="sm:mr-2" />
         <span className="hidden sm:inline">New Campaign</span>
       </Button>
 
@@ -74,15 +74,7 @@ export function NewCampaignModal({
         title="Create New Campaign"
         maxWidth={480}
       >
-        <form
-          action={createAction}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-            paddingTop: 8,
-          }}
-        >
+        <form action={createAction} className="flex flex-col pt-2 gap-5">
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <Label htmlFor="name">Campaign Name</Label>
             <Input

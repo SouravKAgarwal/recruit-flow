@@ -4,6 +4,9 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { z } from "zod";
+import { redis } from "@/lib/redis";
+import { headers } from "next/headers";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export type AuthState =
   | {
@@ -11,9 +14,6 @@ export type AuthState =
       errors?: Record<string, string[]>;
     }
   | undefined;
-
-import { rateLimit } from "@/lib/rate-limit";
-import { headers } from "next/headers";
 
 const updateSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -37,10 +37,7 @@ export async function updateUser(
   const h = await headers();
   const ip = h.get("x-forwarded-for") || "127.0.0.1";
 
-  const { success } = await rateLimit.limit(`update_user_${ip}`);
-  if (!success) {
-    return { error: "Too many requests. Please try again later." };
-  }
+  await enforceRateLimit(`update_user_${ip}`);
 
   const session = await getSession();
   if (!session?.user?.id) {
@@ -99,4 +96,158 @@ export async function updateUser(
     console.error(error);
     return { error: "An unexpected error occurred. Please try again." };
   }
+}
+
+export async function getActiveSessions() {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Not authenticated");
+  }
+
+  // Better Auth stores: active-sessions-{userId} = JSON string of [{token, expiresAt}, ...]
+  // Each session token is its own key: {token} = JSON string of {session: {...}, user: {...}}
+  const listRaw = await redis.get<string>(`active-sessions-${session.user.id}`);
+  if (!listRaw) return [];
+
+  const list: Array<{ token: string; expiresAt: number }> =
+    typeof listRaw === "string" ? JSON.parse(listRaw) : listRaw;
+
+  const now = Date.now();
+  const sessions: any[] = [];
+
+  for (const { token, expiresAt } of list) {
+    if (expiresAt <= now) continue; // skip expired
+
+    const data = await redis.get<string>(token);
+    if (!data) continue;
+
+    try {
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      if (!parsed?.session) continue;
+
+      const s = parsed.session;
+      sessions.push({
+        ...s,
+        expiresAt: new Date(s.expiresAt),
+        createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
+        updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
+      });
+    } catch {
+      continue;
+    }
+  }
+
+  return sessions.sort(
+    (a, b) =>
+      new Date(b.updatedAt ?? b.createdAt).getTime() -
+      new Date(a.updatedAt ?? a.createdAt).getTime(),
+  );
+}
+
+export async function revokeSession(sessionToken: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Not authenticated");
+  }
+
+  // Better Auth stores active-sessions-{userId} as JSON array of {token, expiresAt}
+  const listRaw = await redis.get<string>(`active-sessions-${session.user.id}`);
+  if (!listRaw) throw new Error("Session not found");
+
+  const list: Array<{ token: string; expiresAt: number }> =
+    typeof listRaw === "string" ? JSON.parse(listRaw) : listRaw;
+
+  const belongs = list.some((s) => s.token === sessionToken);
+  if (!belongs) throw new Error("Session not found or unauthorized");
+
+  // Remove from list and update
+  const updated = list.filter((s) => s.token !== sessionToken);
+  if (updated.length === 0) {
+    await redis.del(`active-sessions-${session.user.id}`);
+  } else {
+    await redis.set(
+      `active-sessions-${session.user.id}`,
+      JSON.stringify(updated),
+    );
+  }
+
+  // Delete the token key itself
+  await redis.del(sessionToken);
+
+  return { success: true };
+}
+
+
+export async function deleteAccount() {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Not authenticated");
+  }
+
+  try {
+    // Delete user from DB (cascade should handle related records)
+    await prisma.user.delete({
+      where: { id: session.user.id },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    throw new Error("Failed to delete account");
+  }
+}
+
+/**
+ * Returns connected OAuth / credential accounts for the current user.
+ * Maps Better Auth's providerId values to human-readable labels.
+ */
+export async function getConnectedAccounts() {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+
+  const accounts = await prisma.account.findMany({
+    where: { userId: session.user.id },
+    select: { providerId: true, createdAt: true, accountId: true },
+  });
+
+  return accounts.map((a) => ({
+    providerId: a.providerId,
+    accountId: a.accountId,
+    connectedAt: a.createdAt,
+  }));
+}
+
+/**
+ * Returns real stats and profile info for the current user's Account tab.
+ */
+export async function getUserStats() {
+  const session = await getSession();
+  if (!session?.user?.id) throw new Error("Not authenticated");
+
+  const userId = session.user.id;
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [user, emailsSentThisMonth, totalRecruiters, totalCampaigns, totalTemplates] =
+    await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { createdAt: true, email: true, name: true, emailVerified: true },
+      }),
+      prisma.emailLog.count({
+        where: { userId, sentAt: { gte: startOfMonth } },
+      }),
+      prisma.recruiter.count({ where: { userId } }),
+      prisma.campaign.count({ where: { userId } }),
+      prisma.emailTemplate.count({ where: { userId } }),
+    ]);
+
+  return {
+    createdAt: user?.createdAt ?? null,
+    emailVerified: user?.emailVerified ?? false,
+    emailsSentThisMonth,
+    totalRecruiters,
+    totalCampaigns,
+    totalTemplates,
+  };
 }
