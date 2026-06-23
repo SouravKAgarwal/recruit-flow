@@ -5,7 +5,6 @@ const ENCRYPTED_MODELS: Record<string, string[]> = {
   Recruiter: ["name", "company", "role", "email", "linkedin", "location"],
   Resume: ["originalName"],
   Campaign: ["name"],
-  Account: ["accessToken", "refreshToken", "idToken", "password"],
   EmailLog: ["toEmail", "subject", "errorMessage"],
   EmailTemplate: ["subject", "body"],
 };
@@ -19,8 +18,6 @@ const RELATION_MODELS: Record<string, string> = {
   resumes: "Resume",
   campaign: "Campaign",
   campaigns: "Campaign",
-  account: "Account",
-  accounts: "Account",
   emailLog: "EmailLog",
   emailLogs: "EmailLog",
   emailTemplate: "EmailTemplate",

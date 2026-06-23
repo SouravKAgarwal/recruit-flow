@@ -88,7 +88,7 @@ export function CommandPalette() {
         {/* Results */}
         <div style={{ maxHeight: 340, overflowY: "auto", padding: "6px" }}>
           {filtered.length === 0 && (
-            <div style={{ padding: "24px", textAlign: "center", color: "var(--color-text-muted)", fontSize: 13.5 }}>
+            <div style={{ padding: "24px", textAlign: "left", color: "var(--color-text-muted)", fontSize: 13.5 }}>
               No results for &ldquo;{query}&rdquo;
             </div>
           )}

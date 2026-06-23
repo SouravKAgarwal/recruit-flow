@@ -41,6 +41,8 @@ function NavUserSkeleton() {
   );
 }
 
+import { getUserStats, getActiveSessions, getConnectedAccounts } from "@/app/actions/auth";
+
 async function DynamicNavUser() {
   const session = await requireAuth();
 
@@ -50,7 +52,20 @@ async function DynamicNavUser() {
     avatar: session.image,
   };
 
-  return <NavUser user={user} />;
+  const [userStats, activeSessions, connectedAccounts] = await Promise.all([
+    getUserStats().catch(() => null),
+    getActiveSessions().catch(() => []),
+    getConnectedAccounts().catch(() => []),
+  ]);
+
+  return (
+    <NavUser
+      user={user}
+      userStats={userStats as any}
+      activeSessions={activeSessions}
+      connectedAccounts={connectedAccounts}
+    />
+  );
 }
 
 export function AppSidebar({

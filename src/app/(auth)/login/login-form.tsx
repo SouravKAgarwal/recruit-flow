@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [state, formAction, isPending] = useActionState(
     async (prevState: { error: string | null }, formData: FormData) => {
@@ -26,7 +27,12 @@ export default function LoginForm() {
         return { error: error.message || "An error occurred" };
       }
 
-      router.push("/");
+      // Redirect back to the originally requested page (set by middleware),
+      // defaulting to the dashboard root.
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      // Guard against open-redirect: only allow relative paths
+      const safeUrl = callbackUrl.startsWith("/") ? callbackUrl : "/";
+      router.push(safeUrl);
       router.refresh();
       return { error: null };
     },

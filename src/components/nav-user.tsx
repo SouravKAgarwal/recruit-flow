@@ -27,16 +27,24 @@ import {
   History
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { UserModal } from "@/components/layout/UserModal";
+import { UserModal } from "@/components/layout/user-modal/UserModal";
+
+import { UserStats, Session, ConnectedAccount } from "@/components/layout/user-modal/types";
 
 export function NavUser({
   user,
+  userStats,
+  activeSessions,
+  connectedAccounts,
 }: {
   user: {
     name: string;
     email: string;
     avatar?: string;
   };
+  userStats: UserStats | null;
+  activeSessions: Session[];
+  connectedAccounts: ConnectedAccount[];
 }) {
   const { isMobile } = useSidebar();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -143,6 +151,9 @@ export function NavUser({
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         user={user}
+        userStats={userStats}
+        activeSessions={activeSessions}
+        connectedAccounts={connectedAccounts}
       />
     </SidebarMenu>
   );

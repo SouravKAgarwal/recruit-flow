@@ -1,5 +1,6 @@
+import { Suspense } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import LoginForm from "./login-form";
 
 export default function LoginPage() {
@@ -16,7 +17,14 @@ export default function LoginPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <LoginForm />
+          {/*
+           * Suspense is required here because LoginForm uses useSearchParams()
+           * to read ?callbackUrl. Without a boundary Next.js cannot statically
+           * pre-render this page (it blocks on the dynamic search param read).
+           */}
+          <Suspense fallback={<div className="h-48" />}>
+            <LoginForm />
+          </Suspense>
         </CardContent>
       </Card>
 

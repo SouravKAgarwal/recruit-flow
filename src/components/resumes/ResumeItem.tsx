@@ -8,7 +8,7 @@ import {
   downloadResumeAction,
 } from "@/app/actions/resumes";
 import { useToast } from "@/components/ui/Toast";
-import { Trash2, Star, Edit2, FileText, Download, CheckCircle } from "lucide-react";
+import { Trash2, Star, Edit2, FileText, Download, CheckCircle, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   AlertDialog,
@@ -180,9 +180,18 @@ export function ResumeItem({ resume: r }: { resume: Resume }) {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <a
+            href={`/resumes/${r.filename}`}
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-ghost btn-icon btn-sm h-8 w-8"
+            title="Preview"
+          >
+            <Eye size={14} />
+          </a>
           <button
             onClick={handleDownload}
-            className="btn btn-ghost btn-icon btn-sm"
+            className="btn btn-ghost btn-icon btn-sm h-8 w-8"
             title="Download"
           >
             <Download size={14} />

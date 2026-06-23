@@ -29,8 +29,7 @@ export default function RegisterForm() {
         return { error: error.message || "An error occurred" };
       }
 
-      router.push("/");
-      router.refresh();
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       return { error: null };
     },
     { error: null },

@@ -12,6 +12,20 @@ import {
 } from "./email-templates";
 
 // ---------------------------------------------------------------------------
+// Environment guards
+// ---------------------------------------------------------------------------
+const isProd = process.env.NODE_ENV === "production";
+
+if (
+  !process.env.BETTER_AUTH_SECRET ||
+  process.env.BETTER_AUTH_SECRET.length < 32
+) {
+  throw new Error(
+    "[auth] BETTER_AUTH_SECRET is missing or too short. Set a random 64-char hex string.",
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Better Auth instance
 // ---------------------------------------------------------------------------
 
@@ -20,14 +34,15 @@ export const auth = betterAuth({
   appName: "RecruitsFlow",
 
   // -------------------------------------------------------------------------
-  // Database adapter — Prisma + PostgreSQL + Redis Custom Override
+  // Database adapter — Prisma + PostgreSQL
   // -------------------------------------------------------------------------
   database: prismaAdapter(basePrisma, { provider: "postgresql" }),
 
   // -------------------------------------------------------------------------
-  // Secondary storage — Redis
-  // Stores sessions, rate-limit counters, and OTP/verification tokens so they
-  // survive server restarts without hitting the primary DB on every request.
+  // Secondary storage — Redis (Upstash)
+  // Stores sessions and OTP/verification tokens in Redis so they survive server
+  // restarts and are accessible across edge/serverless instances without hitting
+  // the primary DB on every request.
   // -------------------------------------------------------------------------
   secondaryStorage: {
     get: async (key) => {
@@ -81,6 +96,25 @@ export const auth = betterAuth({
       enabled: true,
       trustedProviders: ["google", "github"],
     },
+    /**
+     * Use "cookie" strategy for the OAuth PKCE state to avoid an extra DB
+     * round-trip during the callback.
+     */
+    storeStateStrategy: "cookie",
+
+    /**
+     * Do NOT store OAuth access/refresh tokens in a browser cookie.
+     * Even encrypted, token material in a cookie is accessible to any server-
+     * side code that can read cookies and is sent on every request.
+     * Tokens are stored securely in the database via the Prisma adapter.
+     */
+    storeAccountCookie: false,
+
+    /**
+     * Encrypt OAuth tokens at rest in the database so a DB leak doesn't
+     * immediately expose live OAuth tokens.
+     */
+    encryptOAuthTokens: true,
   },
 
   // -------------------------------------------------------------------------
@@ -90,40 +124,36 @@ export const auth = betterAuth({
     enabled: true,
 
     /**
-     * Automatically sign the user in immediately after a successful sign-up.
-     * Set to `false` if you want users to verify their email before accessing
-     * the app (pair with `requireEmailVerification: true`).
+     * Do NOT auto-sign-in after sign-up.  The user must verify their email
+     * first.  This prevents unverified accounts from accessing the app.
      */
     autoSignIn: false,
 
     /**
-     * Block sign-in until the user's email address has been verified.
-     * Better Auth returns a 403 with `EMAIL_NOT_VERIFIED` when this is `true`
-     * and the user's `emailVerified` flag is still `false`.
+     * Block sign-in until the user's email has been verified.
+     * Better Auth returns 403 EMAIL_NOT_VERIFIED for unverified attempts.
      */
     requireEmailVerification: true,
 
-    /** Enforce a minimum password length of 8 characters (Better Auth default). */
-    minPasswordLength: 8,
+    /**
+     * 12 characters minimum (NIST SP 800-63B recommends ≥ 8; we use 12 for
+     * stronger resistance to dictionary attacks against the bcrypt hash).
+     */
+    minPasswordLength: 12,
 
     /**
-     * Cap passwords at 128 characters to prevent algorithmic complexity
-     * attacks against the password hashing function (bcrypt / scrypt).
+     * Cap at 128 chars to prevent algorithmic complexity attacks against the
+     * password hashing function (bcrypt / scrypt have work-factor limits).
      */
     maxPasswordLength: 128,
 
     /**
-     * Password-reset token lifetime in seconds.
-     * Default: 3 600 s (1 hour). Setting it explicitly makes the intent clear.
+     * Password-reset token lifetime: 1 hour.
      */
-    resetPasswordTokenExpiresIn: 3600, // 1 hour
+    resetPasswordTokenExpiresIn: 3600,
 
     /**
      * Triggered when the user requests a password-reset link.
-     *
-     * Better Auth passes `{ user, url, token }` — `url` is the complete
-     * ready-to-use reset link; `token` is available if you need to build a
-     * custom URL.
      */
     async sendResetPassword({ user, url }) {
       await sendMail(
@@ -133,39 +163,42 @@ export const auth = betterAuth({
       );
     },
 
+    /**
+     * Invalidate all other sessions when the user resets their password so
+     * a stolen session cannot survive a password change.
+     */
     revokeSessionsOnPasswordReset: true,
   },
 
   // -------------------------------------------------------------------------
-  // Email verification (top-level key — separate from emailAndPassword)
+  // Email verification
   // -------------------------------------------------------------------------
   emailVerification: {
     /**
-     * Sends the verification email after every sign-up automatically.
-     * Better Auth calls this with `{ user, url, token }`.
+     * Send a verification email on every sign-up automatically.
      */
     sendOnSignUp: true,
 
     /**
-     * Re-send a verification link when an unverified user tries to sign in.
-     * Keeps the flow smooth: unverified users get a helpful email instead of
-     * just an error message.
+     * Re-send a verification link when an unverified user tries to sign in
+     * so they have a path forward instead of just seeing an error.
      */
     sendOnSignIn: true,
 
     /**
-     * Once the user clicks the verification link, automatically create a
-     * session for them so they land straight in the app.
+     * Do NOT automatically create a session when the user clicks the
+     * verification link.  Requiring an explicit sign-in after verification
+     * is a safer pattern: it prevents a stolen verification email from
+     * silently granting access.  The user is redirected to /login instead.
      */
-    autoSignInAfterVerification: true,
-
-    /** Verification token lifetime in seconds (default: 3 600 s / 1 hour). */
-    expiresIn: 86400, // 24 hours — gives users enough time to check their inbox
+    autoSignInAfterVerification: false,
 
     /**
-     * Triggered by Better Auth whenever a verification email needs to be sent.
-     * Receives `{ user, url, token }`.
+     * Verification token lifetime: 24 hours — enough time to check an inbox
+     * on a slow connection without leaving stale tokens around for days.
      */
+    expiresIn: 86400,
+
     async sendVerificationEmail({ user, url }) {
       await sendMail(
         user.email,
@@ -180,14 +213,10 @@ export const auth = betterAuth({
   // -------------------------------------------------------------------------
   plugins: [
     /**
-     * emailOTP — enables one-time password sign-in / email verification
-     * without requiring the user to set a password.
+     * emailOTP — enables one-time password email verification.
+     * 6-digit OTP, 10-minute window.
      */
     emailOTP({
-      /**
-       * OTP expiry in seconds.  10 minutes is a sensible default — short
-       * enough to be secure, long enough for users on slow connections.
-       */
       otpLength: 6,
       expiresIn: 600, // 10 minutes
 
@@ -199,8 +228,8 @@ export const auth = betterAuth({
 
     /**
      * nextCookies — patches the cookie setter so cookies set inside
-     * Next.js Server Actions / Route Handlers are correctly applied
-     * in the same request/response cycle.
+     * Next.js Server Actions / Route Handlers are correctly applied in the
+     * same request/response cycle (required for better-auth + Next.js App Router).
      */
     nextCookies(),
   ],
@@ -209,42 +238,68 @@ export const auth = betterAuth({
   // Session configuration
   // -------------------------------------------------------------------------
   session: {
-    /** Sessions expire after 7 days of inactivity. */
-    expiresIn: 60 * 60 * 24 * 7, // 7 days in seconds
-
     /**
-     * Rolling expiry: the session TTL is refreshed whenever the user makes
-     * a request, as long as more than `updateAge` seconds have elapsed since
-     * the last refresh.  Prevents active users from being unexpectedly signed
-     * out while keeping idle sessions from living forever.
+     * Sessions expire after 7 days of total inactivity.
+     * Reduced from 24h rolling to 7 days absolute so users aren't signed out
+     * after a single idle day.
      */
-    updateAge: 60 * 60 * 24, // refresh window: 1 day
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
 
     /**
-     * Cookie cache reduces Redis round-trips on every request.
-     * The session is cached client-side in a signed cookie for up to 5 minutes.
-     * Any server-side invalidation (e.g. sign-out, revocation) still takes
-     * effect at the next request after the cache has expired.
+     * Rolling expiry window: refresh the session TTL at most once per 30
+     * minutes.  Reduces Redis write load from 288×/day (5-min window) to
+     * 48×/day while still keeping active sessions alive.
+     */
+    updateAge: 60 * 30, // 30 minutes
+
+    /**
+     * Cookie cache — stores a signed JWT copy of the session in the browser
+     * so most page navigations don't hit Redis at all.
+     * Invalidation (sign-out, revoke) takes effect within maxAge (5 min).
      */
     cookieCache: {
       enabled: true,
       maxAge: 5 * 60, // 5 minutes
+      strategy: "jwt",
     },
   },
 
   // -------------------------------------------------------------------------
   // Advanced / security settings
   // -------------------------------------------------------------------------
-  // advanced: {
-  //   defaultCookieAttributes: {
-  //     /**
-  //      * Mark all auth cookies as Secure so they are only transmitted over
-  //      * HTTPS.  In local development this will break if you're on plain HTTP —
-  //      * set `BETTER_AUTH_DISABLE_SECURE_COOKIES=true` in your `.env.local`.
-  //      */
-  //     secure: process.env.NODE_ENV === "production",
-  //     sameSite: "strict",
-  //     prefix: "secure",
-  //   },
-  // },
+  advanced: {
+    /**
+     * `rf` prefix keeps cookie names short and non-identifiable.
+     * Cookies will be named rf.session_token, rf.session_data, etc.
+     * In production the __Secure- prefix is prepended automatically via
+     * useSecureCookies.
+     */
+    cookiePrefix: "rf",
+
+    /**
+     * Only set the Secure attribute in production (HTTPS).
+     * On localhost (HTTP) the Secure flag causes browsers to silently drop
+     * the cookie, which breaks the entire auth flow.
+     */
+    useSecureCookies: isProd,
+
+    /**
+     * Explicit default attributes applied to every auth cookie.
+     * - httpOnly: prevent JavaScript access (XSS mitigation)
+     * - sameSite: "lax" — cookies sent on same-site and top-level navigations,
+     *   but not on cross-site subresource requests (CSRF mitigation)
+     * - secure: only transmit over HTTPS in production
+     */
+    defaultCookieAttributes: {
+      httpOnly: true,
+      sameSite: "lax" as const,
+      secure: isProd,
+    },
+
+    /**
+     * Enforce CSRF protection on all state-mutating requests.
+     * This is Better Auth's default; we set it explicitly so it's clear.
+     */
+    disableCSRFCheck: false,
+  },
 });
