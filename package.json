@@ -16,7 +16,6 @@
     "@tailwindcss/postcss": "^4.3.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
-    "bcryptjs": "^3.0.3",
     "better-auth": "^1.6.20",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.10.0",
@@ -39,7 +38,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.2.9",
     "@types/node": "^26.0.0",
     "@types/nodemailer": "^8.0.1",
     "@types/papaparse": "^5.5.2",
