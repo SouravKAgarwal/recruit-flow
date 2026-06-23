@@ -37,8 +37,8 @@ export function GmailPreview({
   });
 
   return (
-    <div className="gmail-chrome bg-white rounded-xl border border-border/60 flex-1 flex flex-col transition-all duration-300 overflow-hidden">
-      <div className="bg-[#f6f8fc] px-4 py-2.5 border-b border-[#e0e0e0] flex items-center gap-3 shrink-0">
+    <div className="gmail-chrome bg-white dark:bg-zinc-950 rounded-xl border border-border/60 dark:border-zinc-800 flex-1 flex flex-col transition-all duration-300 overflow-hidden">
+      <div className="bg-[#f6f8fc] dark:bg-zinc-900 px-4 py-2.5 border-b border-[#e0e0e0] dark:border-zinc-800 flex items-center gap-3 shrink-0">
         <div className="flex gap-1.5">
           {["#ff5f56", "#ffbd2e", "#27c93f"].map((c) => (
             <div
@@ -48,17 +48,17 @@ export function GmailPreview({
             />
           ))}
         </div>
-        <div className="flex-1 bg-[#e8eaed] rounded-md px-3 py-1 text-[11px] text-[#5f6368] font-medium flex items-center">
+        <div className="flex-1 bg-[#e8eaed] dark:bg-zinc-800 rounded-md px-3 py-1 text-[11px] text-[#5f6368] dark:text-zinc-400 font-medium flex items-center">
           mail.google.com
         </div>
       </div>
 
-      <div className="px-5 pt-5 pb-3 border-b border-[#e0e0e0] bg-white shrink-0">
+      <div className="px-5 pt-5 pb-3 border-b border-[#e0e0e0] dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-normal text-[#202124] wrap-break-words">
+          <h3 className="text-lg font-normal text-[#202124] dark:text-zinc-200 wrap-break-words">
             {renderedSubject}
           </h3>
-          <Star size={16} className="text-[#bdbdbd] shrink-0 ml-3" />
+          <Star size={16} className="text-[#bdbdbd] dark:text-zinc-600 shrink-0 ml-3" />
         </div>
 
         <div className="flex items-center gap-3">
@@ -67,32 +67,32 @@ export function GmailPreview({
           </div>
           <div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[13.5px] font-semibold text-[#202124]">
+              <span className="text-[13.5px] font-semibold text-[#202124] dark:text-zinc-200">
                 {senderName}
               </span>
-              <span className="text-[11px] text-[#5f6368]">
+              <span className="text-[11px] text-[#5f6368] dark:text-zinc-400">
                 &lt;{senderEmail}&gt;
               </span>
             </div>
-            <div className="text-[11.5px] text-[#5f6368] mt-0.5">
+            <div className="text-[11.5px] text-[#5f6368] dark:text-zinc-400 mt-0.5">
               to Sarah Chen · {timeStr}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-5 py-5 bg-white flex-1 overflow-y-auto min-h-0">
-        <div className="text-[14px] leading-relaxed text-[#202124] whitespace-pre-wrap wrap-break-words font-sans">
+      <div className="px-5 py-5 bg-white dark:bg-zinc-950 flex-1 overflow-y-auto min-h-0">
+        <div className="text-[14px] leading-relaxed text-[#202124] dark:text-zinc-200 whitespace-pre-wrap wrap-break-words font-sans">
           {renderedBody || (
-            <span className="text-[#bdbdbd] italic">
+            <span className="text-[#bdbdbd] dark:text-zinc-600 italic">
               Your email body will appear here…
             </span>
           )}
         </div>
       </div>
 
-      <div className="px-5 pb-4 bg-white shrink-0">
-        <div className="inline-flex items-center gap-3 px-3 py-2 border border-[#e0e0e0] rounded-lg text-[#202124] hover:bg-gray-50 transition-colors cursor-pointer">
+      <div className="px-5 pb-4 bg-white dark:bg-zinc-950 shrink-0">
+        <div className="inline-flex items-center gap-3 px-3 py-2 border border-[#e0e0e0] dark:border-zinc-800 rounded-lg text-[#202124] dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer">
           <div className="w-8 h-8 rounded-md bg-[#ea4335] flex items-center justify-center shrink-0">
             <span className="text-white text-[9px] font-bold tracking-wider">
               PDF
@@ -100,17 +100,17 @@ export function GmailPreview({
           </div>
           <div className="pr-4">
             <p className="text-xs font-semibold leading-tight">Resume.pdf</p>
-            <p className="text-[#5f6368] text-[10px] leading-tight">128 KB</p>
+            <p className="text-[#5f6368] dark:text-zinc-400 text-[10px] leading-tight">128 KB</p>
           </div>
-          <Paperclip size={14} className="text-[#5f6368] ml-auto" />
+          <Paperclip size={14} className="text-[#5f6368] dark:text-zinc-400 ml-auto" />
         </div>
       </div>
 
-      <div className="bg-[#f6f8fc] border-t border-[#e0e0e0] px-5 py-2.5 flex gap-4 shrink-0">
+      <div className="bg-[#f6f8fc] dark:bg-zinc-900 border-t border-[#e0e0e0] dark:border-zinc-800 px-5 py-2.5 flex gap-4 shrink-0">
         {["Reply", "Reply all", "Forward"].map((a) => (
           <span
             key={a}
-            className="text-[#5f6368] text-xs font-medium cursor-not-allowed hover:text-[#202124] transition-colors"
+            className="text-[#5f6368] dark:text-zinc-400 text-xs font-medium cursor-not-allowed hover:text-[#202124] dark:hover:text-zinc-200 transition-colors"
           >
             {a}
           </span>

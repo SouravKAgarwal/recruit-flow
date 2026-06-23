@@ -21,14 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Trash2,
-  Loader2,
-  Minus,
-  Maximize2,
-  X,
-  MoreVertical,
-} from "lucide-react";
+import { Trash2, Loader2, MoreVertical } from "lucide-react";
 
 interface Template {
   id: string;
@@ -63,7 +56,7 @@ export function TemplateEditor({
             body,
           });
           toast("success", "Template created");
-          router.push(`/templates?id=${tpl.id}`);
+          router.push(`/templates/${tpl.id}`);
         }
       } catch (err) {
         toast(
@@ -95,70 +88,55 @@ export function TemplateEditor({
   return (
     <div className="flex flex-col lg:flex-row h-full gap-8 relative items-stretch">
       <div className="flex-1 min-w-0 flex flex-col h-full">
-        <div className="w-full h-full bg-white rounded-xl shadow-xl flex flex-col border border-gray-200 overflow-hidden">
-          <div className="bg-[#f2f6fc] px-4 py-2.5 flex items-center justify-between border-b border-gray-200/60">
-            <span className="text-sm font-medium text-[#202124]">
+        <div className="w-full h-full bg-white dark:bg-zinc-950 rounded-xl shadow-xl flex flex-col border border-gray-200 dark:border-zinc-800 overflow-hidden">
+          <div className="bg-[#f2f6fc] dark:bg-zinc-900 px-4 py-2.5 flex items-center justify-between border-b border-gray-200/60 dark:border-zinc-800">
+            <span className="text-sm font-medium text-[#202124] dark:text-zinc-200">
               {initialTemplate ? `Editing Template` : "New Template"}
             </span>
-            <div className="flex items-center gap-3">
-              <Minus
-                size={16}
-                className="text-[#5f6368] hover:text-[#202124] cursor-pointer"
-              />
-              <Maximize2
-                size={14}
-                className="text-[#5f6368] hover:text-[#202124] cursor-pointer"
-              />
-              <X
-                size={18}
-                className="text-[#5f6368] hover:text-[#202124] cursor-pointer"
-                onClick={() => router.push("/templates")}
-              />
-            </div>
           </div>
 
-          <div className="px-4 py-1.5 border-b border-gray-100 flex items-center gap-2 group focus-within:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
-            <span className="text-[#5f6368] text-[13px] w-12 shrink-0 select-none">
+          <div className="px-4 py-1.5 border-b border-gray-100 dark:border-zinc-800/50 flex items-center gap-2 group focus-within:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] dark:focus-within:shadow-[0_1px_2px_0_rgba(255,255,255,0.05)]">
+            <span className="text-[#5f6368] dark:text-zinc-400 text-[13px] w-12 shrink-0 select-none">
               Name
             </span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={isPending}
-              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] py-1 bg-transparent"
+              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] dark:text-zinc-200 py-1 bg-transparent dark:placeholder:text-zinc-500"
               placeholder="Template Name"
             />
           </div>
 
           {/* Subject Field */}
-          <div className="px-4 py-1.5 border-b border-gray-100 flex items-center group focus-within:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]">
+          <div className="px-4 py-1.5 border-b border-gray-100 dark:border-zinc-800/50 flex items-center group focus-within:shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] dark:focus-within:shadow-[0_1px_2px_0_rgba(255,255,255,0.05)]">
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={isPending}
-              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] font-medium py-1 bg-transparent"
+              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] dark:text-zinc-200 font-medium py-1 bg-transparent dark:placeholder:text-zinc-500"
               placeholder="Subject"
             />
           </div>
 
-          <div className="px-4 py-3 flex-1 flex flex-col min-h-0 bg-white cursor-text">
+          <div className="px-4 py-3 flex-1 flex flex-col min-h-0 bg-white dark:bg-zinc-950 cursor-text">
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               disabled={isPending}
-              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] resize-none leading-relaxed font-sans"
+              className="flex-1 outline-none focus:outline-none focus:ring-0 focus:border-transparent focus:border-0 border-none text-[14px] text-[#202124] dark:text-zinc-200 resize-none leading-relaxed font-sans bg-transparent dark:placeholder:text-zinc-500"
               placeholder=""
               spellCheck={false}
             />
           </div>
 
-          <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100 bg-white">
+          <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
             <div className="flex items-center gap-4">
               <Button
                 onClick={handleSave}
                 disabled={isPending}
                 variant="outline"
-                className="rounded-full shadow-sm px-6"
+                className="rounded-full shadow-sm px-6 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:border-zinc-700"
               >
                 {isPending ? (
                   <Loader2 size={16} className="animate-spin mr-2" />
@@ -167,8 +145,8 @@ export function TemplateEditor({
               </Button>
             </div>
 
-            <div className="flex items-center gap-1 text-[#444746]">
-              <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
+            <div className="flex items-center gap-1 text-[#444746] dark:text-zinc-300">
+              <button className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors">
                 <MoreVertical size={18} />
               </button>
 
@@ -180,7 +158,7 @@ export function TemplateEditor({
                         variant="ghost"
                         size="sm"
                         disabled={isPending}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 dark:hover:bg-red-900/20"
                       />
                     }
                   >
