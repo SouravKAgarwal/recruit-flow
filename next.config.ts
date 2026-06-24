@@ -9,8 +9,8 @@ const securityHeaders = [
   // Prevent browsers from MIME-sniffing the Content-Type
   { key: "X-Content-Type-Options", value: "nosniff" },
 
-  // Block the page from being embedded in an iframe (clickjacking)
-  { key: "X-Frame-Options", value: "DENY" },
+  // Block the page from being embedded in an iframe on other origins (clickjacking)
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
 
   // Disable legacy XSS auditor (replaced by CSP; keeping header avoids quirks)
   { key: "X-XSS-Protection", value: "1; mode=block" },
@@ -69,8 +69,8 @@ const securityHeaders = [
       "base-uri 'self'",
       // Restrict form POST targets
       "form-action 'self'",
-      // Block all framing
-      "frame-ancestors 'none'",
+      // Allow framing from same origin
+      "frame-ancestors 'self'",
       // Upgrade mixed content in production
       ...(isProd ? ["upgrade-insecure-requests"] : []),
     ].join("; "),

@@ -29,6 +29,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -178,6 +179,9 @@ export function SmtpRowActions({ account }: { account: SmtpAccount }) {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
+                <AlertDialogMedia>
+                  <Trash2 />
+                </AlertDialogMedia>
                 <AlertDialogTitle>Delete this SMTP account?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete the
@@ -186,10 +190,7 @@ export function SmtpRowActions({ account }: { account: SmtpAccount }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
+                <AlertDialogAction onClick={handleDelete} variant="destructive">
                   Delete
                 </AlertDialogAction>
               </AlertDialogFooter>

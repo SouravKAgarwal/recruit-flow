@@ -76,17 +76,6 @@ export async function setActiveResume(id: string) {
   revalidateTag("resumes", "hours");
 }
 
-export async function renameResume(id: string, newName: string) {
-  await enforceRateLimit("rename_resume");
-  const { userId } = await requireAuth();
-  await prisma.resume.updateMany({
-    where: { id, userId },
-    data: { originalName: newName },
-  });
-  revalidatePath("/resumes");
-  revalidateTag("resumes", "hours");
-}
-
 export async function deleteResume(id: string) {
   await enforceRateLimit("delete_resume");
   const { userId } = await requireAuth();

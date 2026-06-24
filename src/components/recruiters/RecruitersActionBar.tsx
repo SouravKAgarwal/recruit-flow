@@ -15,6 +15,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -77,6 +78,9 @@ export function RecruitersActionBar({ recruiters }: { recruiters: Recruiter[] })
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
+                <AlertDialogMedia>
+                  <Trash2 />
+                </AlertDialogMedia>
                 <AlertDialogTitle>
                   Delete {selectedIds.size} recruiters?
                 </AlertDialogTitle>
@@ -87,10 +91,7 @@ export function RecruitersActionBar({ recruiters }: { recruiters: Recruiter[] })
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleBulkDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
+                <AlertDialogAction onClick={handleBulkDelete} variant="destructive">
                   Delete
                 </AlertDialogAction>
               </AlertDialogFooter>
