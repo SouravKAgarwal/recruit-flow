@@ -57,9 +57,9 @@ const securityHeaders = [
       // Images: self + known avatar CDNs + Cloudinary (user uploads)
       [
         "img-src 'self' data: blob:",
-        "https://lh3.googleusercontent.com",   // Google avatars
+        "https://lh3.googleusercontent.com", // Google avatars
         "https://avatars.githubusercontent.com", // GitHub avatars
-        "https://res.cloudinary.com",            // Cloudinary uploads
+        "https://res.cloudinary.com", // Cloudinary uploads
       ].join(" "),
       // Fetch / XHR: self only (auth API + internal)
       "connect-src 'self'",
@@ -91,7 +91,8 @@ const nextConfig: NextConfig = {
     },
     {
       // Tell crawlers not to index auth pages
-      source: "/(login|register|forgot-password|reset-password|verify-email)(.*)",
+      source:
+        "/(login|register|forgot-password|reset-password|verify-email)(.*)",
       headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
     },
   ],
@@ -133,6 +134,7 @@ const nextConfig: NextConfig = {
     },
     optimizeCss: true,
     inlineCss: true,
+    cssChunking: true,
   },
 };
 

@@ -1,8 +1,9 @@
 import { getResumes } from "@/app/actions/resumes";
-import { CheckCircle, Eye, FileText } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import ResumeActions from "./ResumeActions";
+
 import {
   Card,
   CardHeader,
@@ -11,6 +12,7 @@ import {
   CardAction,
   CardFooter,
 } from "@/components/ui/card";
+import ResumePreview from "./ResumePreview";
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -52,15 +54,7 @@ export async function ResumeList() {
                 className="relative overflow-hidden"
                 style={{ height: 200, background: "#f8f8f8", flexShrink: 0 }}
               >
-                <iframe
-                  src={`/resumes/${r.filename}#view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
-                  className="absolute -top-0.75 -left-0.75 border-0 pointer-events-none bg-white"
-                  style={{
-                    width: "calc(100% + 20px)",
-                    height: "calc(100% + 20px)",
-                  }}
-                  tabIndex={-1}
-                />
+                <ResumePreview filename={r.filename} />
 
                 <div
                   className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
