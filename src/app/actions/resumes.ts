@@ -1,15 +1,12 @@
 "use server";
 
 import { revalidatePath, revalidateTag, cacheTag, cacheLife } from "next/cache";
-import { promises as fs } from "fs";
-import path from "path";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import type { Resume } from "@prisma/client";
-
-const UPLOAD_DIR = path.join(process.cwd(), "uploads", "resumes");
+import cloudinary from "@/lib/cloudinary";
 
 export async function getResumes(): Promise<Resume[]> {
   const { userId } = await requireAuth();
@@ -41,13 +38,31 @@ export async function uploadResume(formData: FormData) {
     return { error: "Only PDF and DOCX files are supported." };
   }
 
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
   const ext = file.name.split(".").pop() ?? "pdf";
   const filename = `${crypto.randomUUID()}.${ext}`;
-  const filePath = path.join(UPLOAD_DIR, filename);
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
+
+  try {
+    await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "recruits-flow/resumes",
+            public_id: filename,
+            resource_type: "raw",
+            overwrite: true,
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          },
+        )
+        .end(buffer);
+    });
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    return { error: "Failed to upload resume to Cloudinary." };
+  }
 
   await prisma.resume.create({
     data: {
@@ -83,8 +98,13 @@ export async function deleteResume(id: string) {
   if (!resume) return;
 
   try {
-    await fs.unlink(path.join(UPLOAD_DIR, resume.filename));
-  } catch {}
+    await cloudinary.uploader.destroy(
+      `recruits-flow/resumes/${resume.filename}`,
+      { resource_type: "raw" },
+    );
+  } catch (e) {
+    console.error("Failed to delete from Cloudinary", e);
+  }
 
   await prisma.resume.delete({ where: { id } });
   revalidatePath("/resumes");
@@ -103,9 +123,14 @@ export async function downloadResumeAction(filename: string) {
     throw new Error("Resume not found");
   }
 
-  const filePath = path.join(process.cwd(), "uploads", "resumes", filename);
   try {
-    const fileBuffer = await fs.readFile(filePath);
+    let fileBuffer: Buffer;
+
+    const cloudinaryUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/recruits-flow/resumes/${filename}`;
+    const response = await fetch(cloudinaryUrl);
+    if (!response.ok) throw new Error("File not found on Cloudinary");
+    fileBuffer = Buffer.from(await response.arrayBuffer());
+
     const base64Data = fileBuffer.toString("base64");
     return {
       success: true,

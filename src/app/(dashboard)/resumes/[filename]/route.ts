@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/session";
 import prisma from "@/lib/prisma";
-import { promises as fs } from "fs";
-import path from "path";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ filename: string }> }
+  { params }: { params: Promise<{ filename: string }> },
 ) {
   try {
     const session = await requireAuth().catch(() => null);
@@ -24,13 +22,20 @@ export async function GET(
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    const filePath = path.join(process.cwd(), "uploads", "resumes", filename);
-    const fileBuffer = await fs.readFile(filePath);
+    let fileBuffer: Buffer;
+    const cloudinaryUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/recruits-flow/resumes/${filename}`;
+    const response = await fetch(cloudinaryUrl);
+    if (!response.ok)
+      return new NextResponse("Not Found on Cloudinary", { status: 404 });
+    fileBuffer = Buffer.from(await response.arrayBuffer());
 
     const ext = filename.split(".").pop()?.toLowerCase();
-    const contentType = ext === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const contentType =
+      ext === "pdf"
+        ? "application/pdf"
+        : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(fileBuffer as any, {
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `inline; filename="${resume.originalName}"`,
