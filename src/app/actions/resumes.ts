@@ -18,7 +18,7 @@ export async function getResumes(): Promise<Resume[]> {
 
 async function getCachedResumes(userId: string): Promise<Resume[]> {
   "use cache";
-  cacheLife("hours");
+  cacheLife("minutes");
   cacheTag("resumes", userId);
 
   return prisma.resume.findMany({
@@ -60,7 +60,7 @@ export async function uploadResume(formData: FormData) {
   });
 
   revalidatePath("/resumes");
-  revalidateTag("resumes", "hours");
+  revalidateTag("resumes", "seconds");
   return { success: true };
 }
 
@@ -73,7 +73,7 @@ export async function setActiveResume(id: string) {
   });
   await prisma.resume.update({ where: { id }, data: { isActive: true } });
   revalidatePath("/resumes");
-  revalidateTag("resumes", "hours");
+  revalidateTag("resumes", "seconds");
 }
 
 export async function deleteResume(id: string) {
@@ -88,7 +88,7 @@ export async function deleteResume(id: string) {
 
   await prisma.resume.delete({ where: { id } });
   revalidatePath("/resumes");
-  revalidateTag("resumes", "hours");
+  revalidateTag("resumes", "seconds");
 }
 
 export async function downloadResumeAction(filename: string) {
